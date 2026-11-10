@@ -293,7 +293,7 @@ a.wa svg { width: 24px; height: 24px; flex: none; }
       </div>
 
       <dl class="specs">
-        <div><dt>المدة</dt><dd>68 ثانية</dd></div>
+        <div><dt>المدة</dt><dd>66 ثانية</dd></div>
         <div><dt>الصيغة</dt><dd>عمودي 9:16</dd></div>
         <div><dt>الدقة</dt><dd>720×1280</dd></div>
       </dl>
@@ -352,7 +352,7 @@ a.wa svg { width: 24px; height: 24px; flex: none; }
 (function () {
   var v = document.getElementById('player');
   var err = document.getElementById('err');
-  var src = 'hls/index.m3u8';
+  var src = "hls/index.m3u8?v=2";
   function fail() { err.hidden = false; }
 
   document.getElementById('frame').addEventListener('contextmenu', function (e) { e.preventDefault(); });
