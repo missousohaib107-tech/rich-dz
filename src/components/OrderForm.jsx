@@ -8,6 +8,7 @@ import {
   packageById,
   receiptWhatsAppLink,
   submitOrder,
+  uploadMaterial,
   uploadReceipt,
   validateOrder,
 } from "../lib/orders.js";
@@ -70,16 +71,61 @@ const RECEIPT_ERRORS = {
   "not-image": "هذا الملف ماشي صورة. ارفع صورة ولا سكرين شوت تاع الوصل.",
   "too-big": "الصورة ثقيلة بزاف. ابعث سكرين شوت بلاصتها.",
   "not-found": "ما لقيناش طلب بهذا الرمز وهذا الرقم. شوف الرمز ورقم الهاتف اللي طلبت بيه.",
+  "too-many": "وصلت للحد: 12 صورة للطلب. الباقي ابعثهم في واتساب.",
   network: "الصورة ما طلعتش. شوف الأنترنت وعاود، ولا ابعثها في واتساب.",
 };
 
-// رفع صورة وصل الدفع. إذا code و phone معروفين (بعد الطلب مباشرة) ما نسقسيوش عليهم.
-function ReceiptUpload({ code: knownCode, phone: knownPhone }) {
-  const [code, setCode] = useState(knownCode || "");
-  const [phone, setPhone] = useState(knownPhone || "");
+// رفع صور المنتوج واللوغو (حتى 12 صورة). كل صورة تطلع وحدها باش وحدة خاسرة ما تحبسش الباقي.
+function MaterialsUpload({ code, phone }) {
+  const [sent, setSent] = useState(0);
+  const [busy, setBusy] = useState(null); // null ولا { done, total }
+  const [error, setError] = useState("");
+
+  async function onFiles(e) {
+    const files = [...e.target.files].slice(0, 12);
+    e.target.value = "";
+    if (!files.length) return;
+    setError("");
+    let ok = 0;
+    let failed = "";
+    for (let i = 0; i < files.length; i += 1) {
+      setBusy({ done: i, total: files.length });
+      const result = await uploadMaterial({ code, phone, file: files[i] });
+      if (result.ok) ok += 1;
+      else failed = result.reason;
+      if (result.reason === "too-many" || result.reason === "not-found") break;
+    }
+    setBusy(null);
+    setSent((n) => n + ok);
+    if (failed) setError(RECEIPT_ERRORS[failed] || RECEIPT_ERRORS.network);
+  }
+
+  return (
+    <div className="upload">
+      {sent > 0 && (
+        <p className="upload__done" role="status">
+          <CheckIcon />
+          وصلتنا {sent === 1 ? "صورة وحدة" : sent === 2 ? "زوج صور" : `${sent} صور`}. تقدر تزيد صور أخرى.
+        </p>
+      )}
+      <label className={busy ? "btn btn--line btn--block upload__btn is-busy" : "btn btn--line btn--block upload__btn"} htmlFor={`materials-${code || "later"}`}>
+        {busy ? `الصور راهم يطلعو (${busy.done + 1} من ${busy.total})` : "ارفع صور المنتوج واللوغو"}
+      </label>
+      <input className="upload__input" id={`materials-${code || "later"}`} type="file" accept="image/*" multiple onChange={onFiles} disabled={Boolean(busy)} />
+      {error && (
+        <p className="field__error" role="alert">
+          {error}
+        </p>
+      )}
+    </div>
+  );
+}
+
+// رفع صورة وصل الدفع
+function ReceiptUpload({ code, phone, later = false }) {
   const [state, setState] = useState("idle"); // idle | busy | done
   const [error, setError] = useState("");
-  const id = knownCode ? "receipt-now" : "receipt-later";
+  const id = later ? "receipt-later" : "receipt-now";
 
   async function onFile(e) {
     const file = e.target.files[0];
@@ -104,16 +150,6 @@ function ReceiptUpload({ code: knownCode, phone: knownPhone }) {
 
   return (
     <div className="upload">
-      {!knownCode && (
-        <div className="form__pair">
-          <Field id="receipt-code" label="رمز الطلب">
-            <input className="input latin" id="receipt-code" placeholder="RDZ-C-" value={code} onChange={(e) => setCode(e.target.value)} />
-          </Field>
-          <Field id="receipt-phone" label="رقم الهاتف">
-            <input className="input latin" id="receipt-phone" type="tel" inputMode="tel" value={phone} onChange={(e) => setPhone(e.target.value)} />
-          </Field>
-        </div>
-      )}
       <label className={state === "busy" ? "btn btn--gold btn--block upload__btn is-busy" : "btn btn--gold btn--block upload__btn"} htmlFor={id}>
         {state === "busy" ? "الصورة راهي تطلع" : "ارفع صورة الوصل"}
       </label>
@@ -123,6 +159,26 @@ function ReceiptUpload({ code: knownCode, phone: knownPhone }) {
           {error}
         </p>
       )}
+    </div>
+  );
+}
+
+// للي طلب من قبل: يكتب رمز الطلب ورقم الهاتف مرة وحدة، ويرفع الوصل ولا صور المنتوج
+function LaterUploads() {
+  const [code, setCode] = useState("");
+  const [phone, setPhone] = useState("");
+  return (
+    <div className="upload">
+      <div className="form__pair">
+        <Field id="receipt-code" label="رمز الطلب">
+          <input className="input latin" id="receipt-code" placeholder="RDZ-C-" value={code} onChange={(e) => setCode(e.target.value)} />
+        </Field>
+        <Field id="receipt-phone" label="رقم الهاتف">
+          <input className="input latin" id="receipt-phone" type="tel" inputMode="tel" value={phone} onChange={(e) => setPhone(e.target.value)} />
+        </Field>
+      </div>
+      <ReceiptUpload code={code} phone={phone} later />
+      <MaterialsUpload code={code} phone={phone} />
     </div>
   );
 }
@@ -188,6 +244,12 @@ function OrderSlip({ code, phone, pkg, onAgain }) {
         <WhatsAppIcon />
         ولا ابعث الوصل في واتساب
       </a>
+
+      <div className="slip__box">
+        <span className="slip__label">باش نبداو المحتوى تاعك</span>
+        <p className="slip__text">ابعثلنا صور المنتوج واللوغو إذا عندك. كل ما كانت الصور واضحة، الفيديوهات يخرجو خير.</p>
+        <MaterialsUpload code={code} phone={phone} />
+      </div>
 
       <p className="form__after">تخلّص من بعد؟ احفظ رمز الطلب، وارجع ارفع الوصل من قسم «اطلب باقتك».</p>
 
@@ -500,8 +562,8 @@ export function OrderSection({ packageId, onPackage }) {
           </ul>
           {backendReady && (
             <details className="later">
-              <summary className="later__q">طلبت من قبل؟ ارفع وصل الدفع</summary>
-              <ReceiptUpload />
+              <summary className="later__q">طلبت من قبل؟ ارفع الوصل ولا صور المنتوج</summary>
+              <LaterUploads />
             </details>
           )}
         </div>

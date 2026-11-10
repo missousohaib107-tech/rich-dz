@@ -63,6 +63,9 @@ create table if not exists public.orders (
                   check (receipt_check in ('none', 'waiting', 'ok', 'problem')),
   receipt_note    text not null default '',
 
+  -- صور المنتوج واللوغو اللي يبعثهم الزبون (مسارات في المخزن materials)
+  materials       text[] not null default '{}',
+
   -- خطة المحتوى اللي يحضرها Claude: { "summary": "...", "items": [ { "day", "idea", "script",
   --   "video_prompt", "image_prompt", "caption" } ] }
   plan            jsonb,
@@ -197,15 +200,22 @@ insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_typ
 values ('receipts', 'receipts', false, 5242880, array['image/jpeg', 'image/png', 'image/webp'])
 on conflict (id) do nothing;
 
+-- صور المنتوج واللوغو: مخزن خاص ثاني، الحد 10 ميغا للصورة.
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values ('materials', 'materials', false, 10485760, array['image/jpeg', 'image/png', 'image/webp'])
+on conflict (id) do nothing;
+
 drop policy if exists "anyone uploads a receipt" on storage.objects;
-create policy "anyone uploads a receipt" on storage.objects
+drop policy if exists "anyone uploads order images" on storage.objects;
+create policy "anyone uploads order images" on storage.objects
   for insert to anon, authenticated
-  with check (bucket_id = 'receipts');
+  with check (bucket_id in ('receipts', 'materials'));
 
 drop policy if exists "admin views receipts" on storage.objects;
-create policy "admin views receipts" on storage.objects
+drop policy if exists "admin views order images" on storage.objects;
+create policy "admin views order images" on storage.objects
   for select to authenticated
-  using (bucket_id = 'receipts' and public.is_admin());
+  using (bucket_id in ('receipts', 'materials') and public.is_admin());
 
 -- يربط الصورة اللي ترفعت بالطلب. لازم رمز الطلب ورقم الهاتف يطابقو.
 create or replace function public.attach_receipt(p_code text, p_phone text, p_path text)
@@ -241,6 +251,43 @@ $$;
 
 revoke all on function public.attach_receipt(text, text, text) from public;
 grant execute on function public.attach_receipt(text, text, text) to anon, authenticated;
+
+-- يزيد صورة منتوج للطلب (حتى 12 صورة للطلب الواحد).
+create or replace function public.attach_material(p_code text, p_phone text, p_path text)
+returns int
+language plpgsql security definer set search_path = public
+as $$
+declare
+  v_code  text := upper(btrim(coalesce(p_code, '')));
+  v_phone text := regexp_replace(coalesce(p_phone, ''), '[^0-9]', '', 'g');
+  v_id    uuid;
+  v_files text[];
+  v_count int;
+begin
+  if v_phone like '00213%' then v_phone := '0' || substr(v_phone, 6);
+  elsif v_phone like '213%' then v_phone := '0' || substr(v_phone, 4);
+  end if;
+
+  if v_code !~ '^RDZ-C-[A-Z0-9]{5}$' then raise exception 'order_not_found'; end if;
+  if p_path !~ ('^' || v_code || '/[a-z0-9-]{8,64}\.(jpg|png|webp)$') then
+    raise exception 'invalid_path';
+  end if;
+
+  select id, materials into v_id, v_files from public.orders
+    where code = v_code and phone = v_phone and work_status <> 'cancelled'
+    for update;
+  if not found then raise exception 'order_not_found'; end if;
+  v_count := coalesce(array_length(v_files, 1), 0);
+  if p_path = any (v_files) then return v_count; end if;
+  if v_count >= 12 then raise exception 'too_many_files'; end if;
+
+  update public.orders set materials = materials || p_path where id = v_id;
+  return v_count + 1;
+end;
+$$;
+
+revoke all on function public.attach_material(text, text, text) from public;
+grant execute on function public.attach_material(text, text, text) to anon, authenticated;
 
 -- نداء خفيف يخلي المشروع المجاني صاحي (يناديه GitHub Actions كل يوم)
 create or replace function public.ping()

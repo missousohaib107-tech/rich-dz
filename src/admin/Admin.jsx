@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { formatDZD, imagesLabel } from "../lib/orders.js";
-import { currentUser, isAdmin, listOrders, live, receiptUrl, signIn, signOut, updateOrder } from "./data.js";
+import { currentUser, fileUrls, isAdmin, listOrders, live, receiptUrl, signIn, signOut, updateOrder } from "./data.js";
 
 const relative = new Intl.RelativeTimeFormat("ar-DZ", { numeric: "auto" });
 const dateOnly = new Intl.DateTimeFormat("ar-DZ", { day: "numeric", month: "long" });
@@ -200,6 +200,62 @@ function Receipt({ order: o }) {
   );
 }
 
+// صور المنتوج واللوغو اللي بعثهم الزبون
+function Materials({ order: o, wanted }) {
+  const [urls, setUrls] = useState(null);
+  const [failed, setFailed] = useState(false);
+  const paths = o.materials || [];
+
+  if (!paths.length) {
+    return wanted ? (
+      <section className="mats">
+        <h3 className="card__sub">صور المنتوج</h3>
+        <p className="plan__empty">الزبون مازال ما بعثش صور.</p>
+      </section>
+    ) : null;
+  }
+
+  async function show() {
+    setFailed(false);
+    try {
+      setUrls(await fileUrls("materials", paths));
+    } catch {
+      setFailed(true);
+    }
+  }
+
+  return (
+    <section className="mats">
+      <div className="receipt__head">
+        <h3 className="card__sub">
+          صور المنتوج <span className="plan__n">{paths.length}</span>
+        </h3>
+        {!urls && (
+          <button type="button" className="btn btn--line btn--small" onClick={show}>
+            شوف الصور
+          </button>
+        )}
+      </div>
+      {failed && (
+        <p className="field__error" role="alert">
+          الصور ما تحملوش. عاود جرب.
+        </p>
+      )}
+      {urls && (
+        <ul className="mats__grid">
+          {urls.map((url, i) => (
+            <li key={i}>
+              <a href={url} target="_blank" rel="noopener" aria-label={`صورة المنتوج ${i + 1}، تتحل كاملة`}>
+                <img src={url} alt="" loading="lazy" />
+              </a>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+  );
+}
+
 const PLAN_PARTS = [
   ["script", "السكريبت"],
   ["video_prompt", "برومبت الفيديو"],
@@ -339,6 +395,7 @@ function OrderCard({ order: o, position, onPatch }) {
       )}
 
       <Receipt order={o} />
+      {state !== "cancelled" && <Materials order={o} wanted={state === "queue"} />}
       {(state === "queue" || o.plan || o.receipt_path) && state !== "cancelled" && <Plan order={o} />}
       {state === "queue" && <SendPreview order={o} intl={intl} />}
 

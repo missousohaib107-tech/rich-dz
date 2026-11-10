@@ -39,7 +39,7 @@ let demoOrders = [
     notes: "عندي تخفيضات هذا الأسبوع، نحب نركزو عليها.",
     payment_status: "unpaid", paid_at: null, work_status: "new", videos_done: 0, images_done: 0, admin_notes: "",
     offer: "ملابس نسائية: فساتين، عبايات وحقائب",
-    receipt_path: "demo", receipt_at: hoursAgo(0.6), receipt_check: "waiting", receipt_note: "", plan: null, plan_at: null,
+    receipt_path: "demo", receipt_at: hoursAgo(0.6), receipt_check: "waiting", receipt_note: "", materials: [], plan: null, plan_at: null,
   },
   {
     id: "d2", code: "RDZ-C-M4T8W", created_at: hoursAgo(5),
@@ -48,7 +48,7 @@ let demoOrders = [
     has_pages: false, facebook_url: "", instagram_url: "", tiktok_url: "", notes: "",
     payment_status: "unpaid", paid_at: null, work_status: "new", videos_done: 0, images_done: 0, admin_notes: "",
     offer: "قص، صباغة وتسريحات العرايس",
-    receipt_path: null, receipt_at: null, receipt_check: "none", receipt_note: "", plan: null, plan_at: null,
+    receipt_path: null, receipt_at: null, receipt_check: "none", receipt_note: "", materials: [], plan: null, plan_at: null,
   },
   {
     id: "d3", code: "RDZ-C-B9XDR", created_at: hoursAgo(52),
@@ -58,7 +58,7 @@ let demoOrders = [
     notes: "", payment_status: "paid", paid_at: hoursAgo(48), work_status: "in_progress",
     videos_done: 5, images_done: 6, admin_notes: "بعث صور القاعة. يستنى فيديو العرض الجديد.",
     offer: "قاعة رياضة: اشتراكات شهرية ومدرب خاص",
-    receipt_path: "demo", receipt_at: hoursAgo(49), receipt_check: "waiting", receipt_note: "", plan: demoPlan, plan_at: hoursAgo(47),
+    receipt_path: "demo", receipt_at: hoursAgo(49), receipt_check: "waiting", receipt_note: "", materials: ["demo/1", "demo/2", "demo/3"], plan: demoPlan, plan_at: hoursAgo(47),
   },
   {
     id: "d4", code: "RDZ-C-H2PKN", created_at: hoursAgo(30),
@@ -68,7 +68,7 @@ let demoOrders = [
     notes: "", payment_status: "paid", paid_at: hoursAgo(20), work_status: "new",
     videos_done: 0, images_done: 0, admin_notes: "",
     offer: "بيتزا، طاكوس وبرغر مع التوصيل",
-    receipt_path: "demo", receipt_at: hoursAgo(21), receipt_check: "waiting", receipt_note: "", plan: null, plan_at: null,
+    receipt_path: "demo", receipt_at: hoursAgo(21), receipt_check: "waiting", receipt_note: "", materials: ["demo/1", "demo/2"], plan: null, plan_at: null,
   },
   {
     id: "d5", code: "RDZ-C-Q6VZE", created_at: hoursAgo(230),
@@ -78,7 +78,7 @@ let demoOrders = [
     notes: "", payment_status: "paid", paid_at: hoursAgo(220), work_status: "delivered",
     videos_done: 7, images_done: 7, admin_notes: "",
     offer: "صالونات وطاولات وديكور",
-    receipt_path: "demo", receipt_at: hoursAgo(222), receipt_check: "waiting", receipt_note: "", plan: null, plan_at: null,
+    receipt_path: "demo", receipt_at: hoursAgo(222), receipt_check: "waiting", receipt_note: "", materials: ["demo/1"], plan: null, plan_at: null,
   },
 ];
 
@@ -126,13 +126,28 @@ export async function updateOrder(id, patch) {
   return data;
 }
 
-// رابط مؤقت (10 دقايق) لصورة الوصل. المخزن خاص، وغير المسؤول يقدر يطلبو.
-export async function receiptUrl(path) {
+const demoImage = (title, line, fill) => {
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="600" height="760"><rect width="600" height="760" fill="${fill}"/><text x="300" y="360" font-family="sans-serif" font-size="44" font-weight="700" text-anchor="middle" fill="#121317">${title}</text><text x="300" y="420" font-family="sans-serif" font-size="26" text-anchor="middle" fill="#555">${line}</text></svg>`;
+  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+};
+
+// روابط مؤقتة (10 دقايق) لصور الزبون. المخازن خاصة، وغير المسؤول يقدر يطلبهم.
+// bucket: "receipts" (الوصل) ولا "materials" (صور المنتوج)
+export async function fileUrls(bucket, paths) {
   if (!live) {
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="600" height="760"><rect width="600" height="760" fill="#f3f1ec"/><text x="300" y="360" font-family="sans-serif" font-size="44" font-weight="700" text-anchor="middle" fill="#121317">وصل تجريبي</text><text x="300" y="420" font-family="sans-serif" font-size="26" text-anchor="middle" fill="#555">هنا تبان صورة الوصل تاع الزبون</text></svg>`;
-    return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+    return paths.map((_p, i) =>
+      bucket === "receipts"
+        ? demoImage("وصل تجريبي", "هنا تبان صورة الوصل تاع الزبون", "#f3f1ec")
+        : demoImage(`صورة منتوج ${i + 1}`, "هنا تبان الصورة اللي بعثها الزبون", "#e8dcc0"),
+    );
   }
-  const { data, error } = await supabase.storage.from("receipts").createSignedUrl(path, 600);
+  const { data, error } = await supabase.storage.from(bucket).createSignedUrls(paths, 600);
   if (error) throw error;
-  return data.signedUrl;
+  return data.filter((d) => !d.error && d.signedUrl).map((d) => d.signedUrl);
+}
+
+export async function receiptUrl(path) {
+  const [url] = await fileUrls("receipts", [path]);
+  if (!url) throw new Error("no receipt url");
+  return url;
 }

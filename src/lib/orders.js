@@ -72,12 +72,12 @@ export async function submitOrder(o) {
   }
 }
 
-// ── وصل الدفع ──
+// ── صور الزبون: وصل الدفع وصور المنتوج ──
 // نصغرو الصورة ونحولوها JPEG قبل الرفع: تطلع بسرعة حتى بكونيكسيون ضعيفة.
-async function toJpeg(file) {
+async function toJpeg(file, maxSide, quality) {
   try {
     const bitmap = await createImageBitmap(file);
-    const scale = Math.min(1, 1600 / Math.max(bitmap.width, bitmap.height));
+    const scale = Math.min(1, maxSide / Math.max(bitmap.width, bitmap.height));
     const canvas = document.createElement("canvas");
     canvas.width = Math.round(bitmap.width * scale);
     canvas.height = Math.round(bitmap.height * scale);
@@ -85,7 +85,7 @@ async function toJpeg(file) {
     ctx.fillStyle = "#fff";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
-    return await new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.85));
+    return await new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", quality));
   } catch {
     return null;
   }
@@ -98,14 +98,14 @@ function randomName() {
 
 const PLAIN_TYPES = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp" };
 
-// يرفع صورة الوصل ويربطها بالطلب. يرجع { ok: true } ولا { ok: false, reason }
-// reason: "not-image" | "too-big" | "not-found" | "network"
-export async function uploadReceipt({ code, phone, file }) {
+// يرفع صورة ويربطها بالطلب. يرجع { ok: true } ولا { ok: false, reason }
+// reason: "not-image" | "too-big" | "not-found" | "too-many" | "network"
+async function sendImage({ bucket, rpc, maxSide, quality, maxBytes }, { code, phone, file }) {
   const cleanCode = String(code || "").trim().toUpperCase();
   if (!/^RDZ-C-[A-Z0-9]{5}$/.test(cleanCode) || !isValidPhone(phone)) return { ok: false, reason: "not-found" };
   if (!file || !file.type.startsWith("image/")) return { ok: false, reason: "not-image" };
 
-  let blob = await toJpeg(file);
+  let blob = await toJpeg(file, maxSide, quality);
   let ext = "jpg";
   if (!blob) {
     // المتصفح ما قدرش يقرا الصورة: نبعثوها كيما هي إذا كانت من نوع مقبول
@@ -113,20 +113,30 @@ export async function uploadReceipt({ code, phone, file }) {
     blob = file;
     ext = PLAIN_TYPES[file.type];
   }
-  if (blob.size > 5 * 1024 * 1024) return { ok: false, reason: "too-big" };
+  if (blob.size > maxBytes) return { ok: false, reason: "too-big" };
 
   try {
     const client = await getClient();
     const path = `${cleanCode}/${randomName()}.${ext}`;
-    const up = await client.storage.from("receipts").upload(path, blob, { contentType: blob.type, upsert: false });
+    const up = await client.storage.from(bucket).upload(path, blob, { contentType: blob.type, upsert: false });
     if (up.error) return { ok: false, reason: "network" };
-    const { error } = await client.rpc("attach_receipt", { p_code: cleanCode, p_phone: normalizePhone(phone), p_path: path });
+    const { error } = await client.rpc(rpc, { p_code: cleanCode, p_phone: normalizePhone(phone), p_path: path });
     if (!error) return { ok: true };
-    return { ok: false, reason: String(error.message || "").includes("order_not_found") ? "not-found" : "network" };
+    const msg = String(error.message || "");
+    if (msg.includes("order_not_found")) return { ok: false, reason: "not-found" };
+    if (msg.includes("too_many_files")) return { ok: false, reason: "too-many" };
+    return { ok: false, reason: "network" };
   } catch {
     return { ok: false, reason: "network" };
   }
 }
+
+export const uploadReceipt = (args) =>
+  sendImage({ bucket: "receipts", rpc: "attach_receipt", maxSide: 1600, quality: 0.85, maxBytes: 5 * 1024 * 1024 }, args);
+
+// صور المنتوج تتخدم بيها الفيديوهات، على هذا نخليوها كبار وبجودة عالية
+export const uploadMaterial = (args) =>
+  sendImage({ bucket: "materials", rpc: "attach_material", maxSide: 2400, quality: 0.92, maxBytes: 10 * 1024 * 1024 }, args);
 
 // رابط واتساب فيه الطلب كامل. يخدم كي قاعدة البيانات ما تكونش مربوطة
 // ولا كي الأنترنت تاع الزبون تقطع، باش حتى طلب ما يضيع.

@@ -1113,3 +1113,8 @@
 .input--short {
   min-height: 72px;
 }
+
+.slip__text {
+  font-size: 15px;
+  margin-bottom: 6px;
+}
