@@ -16,11 +16,12 @@ export const payment = {
   ccp: "0043286798 clé 17",
 };
 
-// قاعدة البيانات (Supabase). حتى يتعمرو هذو الزوج، الطلب يتبعث في واتساب.
-// الخطوات في ملف SETUP.md
+// قاعدة البيانات (Supabase، مشروع rich-dz). هذا المفتاح عمومي (publishable):
+// عادي يكون في الموقع، والحماية راهي في قواعد القاعدة (supabase/schema.sql).
+// إذا تفرغو هذو الزوج، الطلب يرجع يتبعث في واتساب.
 export const backend = {
-  supabaseUrl: "",
-  supabaseKey: "",
+  supabaseUrl: "https://ijpjpdkiznvovlgoeevm.supabase.co",
+  supabaseKey: "sb_publishable__6AylpgDtLNs8fdkBM_zkQ_B1QM_lzX",
 };
 
 // الباقات الأسبوعية. إذا بدلت سعر هنا، بدلو ثاني في جدول packages

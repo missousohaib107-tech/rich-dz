@@ -83,12 +83,18 @@ alter table public.packages enable row level security;
 alter table public.orders   enable row level security;
 alter table public.admins   enable row level security;
 
-create or replace function public.is_admin()
+-- الدوال المساعدة تاع الحماية في مخطط خاص: السياسات تستعملهم، بصح ما يتنادوش من برا (API).
+create schema if not exists app_private;
+grant usage on schema app_private to anon, authenticated;
+
+create or replace function app_private.is_admin()
 returns boolean
-language sql stable security definer set search_path = public
+language sql stable security definer set search_path = ''
 as $$
-  select exists (select 1 from public.admins where user_id = auth.uid());
+  select exists (select 1 from public.admins where user_id = (select auth.uid()));
 $$;
+revoke all on function app_private.is_admin() from public;
+grant execute on function app_private.is_admin() to authenticated;
 
 drop policy if exists "admin reads own row" on public.admins;
 create policy "admin reads own row" on public.admins
@@ -96,19 +102,19 @@ create policy "admin reads own row" on public.admins
 
 drop policy if exists "admin reads orders" on public.orders;
 create policy "admin reads orders" on public.orders
-  for select to authenticated using (public.is_admin());
+  for select to authenticated using (app_private.is_admin());
 
 drop policy if exists "admin updates orders" on public.orders;
 create policy "admin updates orders" on public.orders
-  for update to authenticated using (public.is_admin()) with check (public.is_admin());
+  for update to authenticated using (app_private.is_admin()) with check (app_private.is_admin());
 
 drop policy if exists "admin reads packages" on public.packages;
 create policy "admin reads packages" on public.packages
-  for select to authenticated using (public.is_admin());
+  for select to authenticated using (app_private.is_admin());
 
 drop policy if exists "admin updates packages" on public.packages;
 create policy "admin updates packages" on public.packages
-  for update to authenticated using (public.is_admin()) with check (public.is_admin());
+  for update to authenticated using (app_private.is_admin()) with check (app_private.is_admin());
 
 -- الزائر ما عندو حتى صلاحية مباشرة على الجداول.
 -- الحساب المسجل عندو صلاحية، بصح السياسات الفوق تخلي غير المسؤول يشوف.
@@ -205,17 +211,30 @@ insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_typ
 values ('materials', 'materials', false, 10485760, array['image/jpeg', 'image/png', 'image/webp'])
 on conflict (id) do nothing;
 
+-- الرفع مسموح غير في مجلد باسم رمز طلب موجود: اللي ما عندوش طلب ما يقدرش يعمر المخزن.
+create or replace function app_private.order_code_exists(p_code text)
+returns boolean
+language sql stable security definer set search_path = ''
+as $$
+  select exists (select 1 from public.orders where code = p_code and work_status <> 'cancelled');
+$$;
+revoke all on function app_private.order_code_exists(text) from public;
+grant execute on function app_private.order_code_exists(text) to anon, authenticated;
+
 drop policy if exists "anyone uploads a receipt" on storage.objects;
 drop policy if exists "anyone uploads order images" on storage.objects;
 create policy "anyone uploads order images" on storage.objects
   for insert to anon, authenticated
-  with check (bucket_id in ('receipts', 'materials'));
+  with check (
+    bucket_id in ('receipts', 'materials')
+    and app_private.order_code_exists((storage.foldername(name))[1])
+  );
 
 drop policy if exists "admin views receipts" on storage.objects;
 drop policy if exists "admin views order images" on storage.objects;
 create policy "admin views order images" on storage.objects
   for select to authenticated
-  using (bucket_id in ('receipts', 'materials') and public.is_admin());
+  using (bucket_id in ('receipts', 'materials') and app_private.is_admin());
 
 -- يربط الصورة اللي ترفعت بالطلب. لازم رمز الطلب ورقم الهاتف يطابقو.
 create or replace function public.attach_receipt(p_code text, p_phone text, p_path text)
@@ -291,7 +310,7 @@ grant execute on function public.attach_material(text, text, text) to anon, auth
 
 -- نداء خفيف يخلي المشروع المجاني صاحي (يناديه GitHub Actions كل يوم)
 create or replace function public.ping()
-returns timestamptz language sql stable as $$ select now(); $$;
+returns timestamptz language sql stable set search_path = '' as $$ select now(); $$;
 grant execute on function public.ping() to anon, authenticated;
 
 -- ─────────────────────────────────────────────────────────────
