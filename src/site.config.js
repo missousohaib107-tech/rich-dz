@@ -109,7 +109,7 @@ export const works = [
     title: "تخفيضات تفريغ المحل",
     client: "Milina Déco",
     category: "shops",
-    duration: "1:00",
+    duration: "0:37",
   },
   {
     path: "works/eurl-cgd",
