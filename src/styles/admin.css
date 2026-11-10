@@ -387,3 +387,170 @@
   font-weight: 700;
   text-decoration: underline;
 }
+
+/* ── الوصل، الخطة، والإرسال ── */
+.card__sub {
+  font-size: 16px;
+  font-weight: 800;
+  line-height: 1.5;
+}
+
+.receipt,
+.plan,
+.send {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+
+.receipt__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.receipt__head .btn {
+  flex: none;
+  white-space: nowrap;
+}
+
+.receipt__state {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.receipt--ok .receipt__state {
+  color: var(--ok);
+  font-weight: 700;
+}
+
+.receipt--problem .receipt__state {
+  color: var(--bad);
+  font-weight: 700;
+}
+
+.receipt__note {
+  font-size: 14px;
+}
+
+.receipt__img {
+  display: block;
+  border: 1px solid var(--line-strong);
+  border-radius: 10px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.receipt__img img {
+  width: 100%;
+  max-height: 460px;
+  object-fit: contain;
+}
+
+.receipt__warn {
+  color: var(--gold);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.plan__n {
+  margin-inline-start: 6px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.plan__summary,
+.plan__empty {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.plan .btn {
+  align-self: flex-start;
+}
+
+.plan__item {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--ground);
+}
+
+.plan__q {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 12px 14px;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.5;
+  cursor: pointer;
+  list-style: none;
+}
+
+.plan__q::-webkit-details-marker {
+  display: none;
+}
+
+.plan__day {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border: 1px solid var(--gold);
+  border-radius: 50%;
+  color: var(--gold);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.plan__part {
+  padding: 12px 14px;
+  border-top: 1px solid var(--line);
+}
+
+.plan__bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.plan__label {
+  color: var(--gold);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.plan__text {
+  font-size: 14px;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.send__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.send__row .input {
+  flex: 1 1 200px;
+  min-height: 44px;
+  font-size: 14px;
+}
+
+.send__row .btn {
+  min-height: 44px;
+}
+
+.btn[disabled] {
+  opacity: 0.45;
+  cursor: default;
+}

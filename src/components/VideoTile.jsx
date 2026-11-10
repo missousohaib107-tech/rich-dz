@@ -21,7 +21,7 @@ export default function VideoTile({ video, onPlay, face = false, eager = false }
         decoding="async"
       />
       {video.concept && <span className="tile__flag">نموذج تصوري</span>}
-      {face && <span className="tile__flag">صهيب يشرحلك الخدمة</span>}
+      {face && <span className="tile__flag">{video.flag || "شوف كيفاش نخدمو"}</span>}
       <span className="tile__play">
         <PlayIcon />
       </span>

@@ -7,6 +7,29 @@ const supabase = live ? createClient(backend.supabaseUrl, backend.supabaseKey) :
 
 const hoursAgo = (h) => new Date(Date.now() - h * 3600 * 1000).toISOString();
 
+// خطة تجريبية: يومين من أسبوع، باش تشوف كيفاش تبان الخطة كي يحضرها Claude
+const demoPlan = {
+  summary: "قاعة رياضة في حي سكني. الهدف: اشتراكات جديدة قبل نهاية الشهر. النبرة: حماسية وقريبة، بالدارجة.",
+  items: [
+    {
+      day: 1,
+      idea: "قبل وبعد: القاعة فارغة الصباح، وعامرة في العشية",
+      script: "ما عندكش الوقت؟ القاعة محلولة من 6 تاع الصباح.\nجي قبل الخدمة، ولا بعدها.\nاشتراك الشهر بسعر خاص هذا الأسبوع.\nراسلنا دروك.",
+      video_prompt: "Vertical 9:16, 8 seconds. Modern neighbourhood gym at sunrise, empty, warm light through windows, slow dolly forward between machines. Hard cut to the same angle in the evening: busy, people training, energetic. Realistic, cinematic, natural colours. No text, no logos.",
+      image_prompt: "Vertical 4:5 photo. Clean modern gym interior, row of treadmills facing large windows at sunrise, warm golden light, empty and inviting. Realistic, sharp, no people, no text.",
+      caption: "القاعة محلولة من 6 تاع الصباح 💪 اشتراك الشهر بسعر خاص هذا الأسبوع. راسلنا.",
+    },
+    {
+      day: 2,
+      idea: "3 أخطاء يديروها الجدد في القاعة",
+      script: "3 أخطاء يديروها الجدد:\n1. يبداو بلا تسخين.\n2. يهزو ثقيل من أول نهار.\n3. ما يشربوش الماء.\nعندنا مدرب يوريك من الأول.",
+      video_prompt: "Vertical 9:16, 10 seconds, three quick shots in a gym: a young man stretching before training; a hand choosing a lighter dumbbell from the rack; a water bottle on a bench beside a towel. Handheld, bright, friendly. No text, no logos.",
+      image_prompt: "Vertical 4:5 photo. A coach showing a beginner the correct squat posture in a bright gym, both smiling, natural light. Realistic, no text.",
+      caption: "أول مرة في القاعة؟ المدرب تاعنا يوريك كلش من الأول. جي جرب.",
+    },
+  ],
+};
+
 let demoOrders = [
   {
     id: "d1", code: "RDZ-C-7K3QF", created_at: hoursAgo(1.5),
@@ -15,6 +38,8 @@ let demoOrders = [
     has_pages: true, facebook_url: "https://facebook.com/example", instagram_url: "example.shop", tiktok_url: "",
     notes: "عندي تخفيضات هذا الأسبوع، نحب نركزو عليها.",
     payment_status: "unpaid", paid_at: null, work_status: "new", videos_done: 0, images_done: 0, admin_notes: "",
+    offer: "ملابس نسائية: فساتين، عبايات وحقائب",
+    receipt_path: "demo", receipt_at: hoursAgo(0.6), receipt_check: "waiting", receipt_note: "", plan: null, plan_at: null,
   },
   {
     id: "d2", code: "RDZ-C-M4T8W", created_at: hoursAgo(5),
@@ -22,6 +47,8 @@ let demoOrders = [
     package_id: "daily", package_name: "اليومي", videos_total: 7, images_total: 7, price_dzd: 10000,
     has_pages: false, facebook_url: "", instagram_url: "", tiktok_url: "", notes: "",
     payment_status: "unpaid", paid_at: null, work_status: "new", videos_done: 0, images_done: 0, admin_notes: "",
+    offer: "قص، صباغة وتسريحات العرايس",
+    receipt_path: null, receipt_at: null, receipt_check: "none", receipt_note: "", plan: null, plan_at: null,
   },
   {
     id: "d3", code: "RDZ-C-B9XDR", created_at: hoursAgo(52),
@@ -30,6 +57,8 @@ let demoOrders = [
     has_pages: true, facebook_url: "https://facebook.com/example", instagram_url: "https://instagram.com/example", tiktok_url: "https://tiktok.com/@example",
     notes: "", payment_status: "paid", paid_at: hoursAgo(48), work_status: "in_progress",
     videos_done: 5, images_done: 6, admin_notes: "بعث صور القاعة. يستنى فيديو العرض الجديد.",
+    offer: "قاعة رياضة: اشتراكات شهرية ومدرب خاص",
+    receipt_path: "demo", receipt_at: hoursAgo(49), receipt_check: "waiting", receipt_note: "", plan: demoPlan, plan_at: hoursAgo(47),
   },
   {
     id: "d4", code: "RDZ-C-H2PKN", created_at: hoursAgo(30),
@@ -38,6 +67,8 @@ let demoOrders = [
     has_pages: true, facebook_url: "مطعم تجريبي", instagram_url: "", tiktok_url: "",
     notes: "", payment_status: "paid", paid_at: hoursAgo(20), work_status: "new",
     videos_done: 0, images_done: 0, admin_notes: "",
+    offer: "بيتزا، طاكوس وبرغر مع التوصيل",
+    receipt_path: "demo", receipt_at: hoursAgo(21), receipt_check: "waiting", receipt_note: "", plan: null, plan_at: null,
   },
   {
     id: "d5", code: "RDZ-C-Q6VZE", created_at: hoursAgo(230),
@@ -46,6 +77,8 @@ let demoOrders = [
     has_pages: true, facebook_url: "https://facebook.com/example", instagram_url: "", tiktok_url: "",
     notes: "", payment_status: "paid", paid_at: hoursAgo(220), work_status: "delivered",
     videos_done: 7, images_done: 7, admin_notes: "",
+    offer: "صالونات وطاولات وديكور",
+    receipt_path: "demo", receipt_at: hoursAgo(222), receipt_check: "waiting", receipt_note: "", plan: null, plan_at: null,
   },
 ];
 
@@ -91,4 +124,15 @@ export async function updateOrder(id, patch) {
   const { data, error } = await supabase.from("orders").update(patch).eq("id", id).select().single();
   if (error) throw error;
   return data;
+}
+
+// رابط مؤقت (10 دقايق) لصورة الوصل. المخزن خاص، وغير المسؤول يقدر يطلبو.
+export async function receiptUrl(path) {
+  if (!live) {
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="600" height="760"><rect width="600" height="760" fill="#f3f1ec"/><text x="300" y="360" font-family="sans-serif" font-size="44" font-weight="700" text-anchor="middle" fill="#121317">وصل تجريبي</text><text x="300" y="420" font-family="sans-serif" font-size="26" text-anchor="middle" fill="#555">هنا تبان صورة الوصل تاع الزبون</text></svg>`;
+    return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+  }
+  const { data, error } = await supabase.storage.from("receipts").createSignedUrl(path, 600);
+  if (error) throw error;
+  return data.signedUrl;
 }

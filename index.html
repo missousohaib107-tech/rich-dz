@@ -11,6 +11,16 @@
     <meta property="og:description" content="كل يوم فيديو وصورة إعلانية للتجار الجزائريين. تخلّص بالأسبوع، والمحتوى يوصلك جاهز للنشر." />
     <meta property="og:type" content="website" />
     <meta property="og:locale" content="ar_DZ" />
+    <script>
+      // الحركة تتفعّل غير إذا المتصفح يدعمها والزائر ما طلبش تقليل الحركة.
+      // إذا صرا خطأ في الصفحة، نحّيوها باش المحتوى يبان كامل.
+      (function () {
+        var root = document.documentElement;
+        if (!("IntersectionObserver" in window) || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+        root.classList.add("motion");
+        addEventListener("error", function () { root.classList.remove("motion"); });
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

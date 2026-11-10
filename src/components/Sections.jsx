@@ -3,28 +3,29 @@ import { brand, customOffer, faqs, packages, tutorials, workCategories, works } 
 import { contentsLabel, formatDZD } from "../lib/orders.js";
 import VideoTile from "./VideoTile.jsx";
 import { PlayIcon, WhatsAppIcon } from "./icons.jsx";
+import { CountUp } from "../lib/motion.jsx";
 
 export function WeekSteps() {
   return (
     <section className="section" id="how">
       <div className="wrap">
-        <div className="section__head">
+        <div className="section__head" data-reveal="up">
           <h2 className="section__title">كيفاش يمشي الأسبوع معانا</h2>
         </div>
-        <ol className="steps">
-          <li className="steps__item">
+        <ol className="steps" data-reveal="each">
+          <li className="steps__item" style={{ "--i": 0 }}>
             <h3 className="steps__title">تخيّر باقة وتبعث الطلب</h3>
             <p className="steps__text">تعمر معلوماتك وروابط صفحاتك هنا في الموقع. دقيقة وتكمل.</p>
           </li>
-          <li className="steps__item">
+          <li className="steps__item" style={{ "--i": 1 }}>
             <h3 className="steps__title">تخلّص الأسبوع</h3>
             <p className="steps__text">بـ BaridiMob ولا CCP. الأسبوع يبدا من نهار ما يتأكد الدفع.</p>
           </li>
-          <li className="steps__item">
+          <li className="steps__item" style={{ "--i": 2 }}>
             <h3 className="steps__title">تشوف كل فيديو قبل</h3>
             <p className="steps__text">يوصلك رابط معاينة. إذا تحب تبدل حاجة تقولنا ونعدلوها.</p>
           </li>
-          <li className="steps__item">
+          <li className="steps__item" style={{ "--i": 3 }}>
             <h3 className="steps__title">تستلم وتنشر</h3>
             <p className="steps__text">النسخة النهائية توصلك جاهزة، ونوريوك كيفاش تنشرها في فيسبوك، انستغرام وتيك توك.</p>
           </li>
@@ -41,7 +42,7 @@ export function Week({ perDay, label }) {
       {Array.from({ length: perDay }, (_, row) => (
         <div className="week" key={row}>
           {Array.from({ length: 7 }, (_, i) => (
-            <span key={i} className="week__day week__day--on" />
+            <span key={i} className="week__day week__day--on" style={{ "--c": row * 7 + i }} />
           ))}
         </div>
       ))}
@@ -53,7 +54,7 @@ export function Packages({ onChoose }) {
   return (
     <section className="section" id="packages">
       <div className="wrap">
-        <div className="section__head">
+        <div className="section__head" data-reveal="up">
           <h2 className="section__title">الباقات الأسبوعية</h2>
           <p className="section__lead">
             كل باقة هي أسبوع محتوى كامل، من أول نهار لسابع نهار. ومع كل باقة نوريوك كيفاش تنشر، خطوة بخطوة.
@@ -61,14 +62,14 @@ export function Packages({ onChoose }) {
         </div>
         <div className="rates">
           {packages.map((p) => (
-            <article className="rate" key={p.id}>
+            <article className="rate" key={p.id} data-reveal="week">
               <div>
                 <h3 className="rate__name">{p.name}</h3>
                 <p className="rate__line">{p.line}</p>
               </div>
               <p className="rate__price">
                 <span className="rate__amount">
-                  <span className="latin">{formatDZD(p.price)}</span> دج
+                  <CountUp value={p.price} format={formatDZD} /> دج
                 </span>
                 <span className="rate__unit">في الأسبوع، يعني {p.spoken}</span>
               </p>
@@ -83,7 +84,7 @@ export function Packages({ onChoose }) {
               </div>
             </article>
           ))}
-          <article className="rate rate--custom">
+          <article className="rate rate--custom" data-reveal="up">
             <div>
               <h3 className="rate__name">{customOffer.name}</h3>
               <p className="rate__line">{customOffer.line}</p>
@@ -119,7 +120,7 @@ export function Works({ onPlay }) {
   return (
     <section className="section" id="works">
       <div className="wrap">
-        <div className="section__head">
+        <div className="section__head" data-reveal="up">
           <h2 className="section__title">أعمالنا</h2>
           <p className="section__lead">فيديوهات خدمناها لمحلات ومؤسسات جزائرية. اضغط على أي واحد وشوفو كامل.</p>
         </div>
@@ -138,9 +139,9 @@ export function Works({ onPlay }) {
             </button>
           )}
         </div>
-        <ul className="works">
-          {shown.map((w) => (
-            <li key={w.path}>
+        <ul className="works" data-reveal="each">
+          {shown.map((w, i) => (
+            <li key={w.path} style={{ "--i": i % 5 }}>
               <VideoTile video={w} onPlay={onPlay} />
               <h3 className="work__title">{w.title}</h3>
               <p className="work__client">{w.client}</p>
@@ -156,11 +157,11 @@ export function Guides({ onPlay }) {
   return (
     <section className="section" id="guides">
       <div className="wrap">
-        <div className="section__head">
+        <div className="section__head" data-reveal="up">
           <h2 className="section__title">ما عندكش صفحة؟ نوريوك كيفاش تحلها</h2>
           <p className="section__lead">ثلاث شروحات قصار. تبّع الخطوات وصفحتك توجد في دقايق.</p>
         </div>
-        <div className="guides">
+        <div className="guides" data-reveal="up">
           {tutorials.map((t) =>
             t.path ? (
               <button type="button" className="guide" key={t.id} onClick={() => onPlay({ path: t.path, title: t.title })}>
@@ -193,11 +194,11 @@ export function Sites() {
   return (
     <section className="section" id="sites">
       <div className="wrap">
-        <div className="section__head">
+        <div className="section__head" data-reveal="up">
           <h2 className="section__title">ونخدمو المواقع ثاني</h2>
           <p className="section__lead">إذا تحب موقع لمحلك مع المحتوى، نخدموهولك حنا.</p>
         </div>
-        <div className="sites__list">
+        <div className="sites__list" data-reveal="up">
           <div className="sites__row">
             <p className="sites__name">
               موقع أساسي
@@ -239,10 +240,10 @@ export function Faq() {
   return (
     <section className="section" id="faq">
       <div className="wrap">
-        <div className="section__head">
+        <div className="section__head" data-reveal="up">
           <h2 className="section__title">أسئلة يسقسيوها بزاف</h2>
         </div>
-        <div className="faq">
+        <div className="faq" data-reveal="up">
           {faqs.map((f) => (
             <details className="faq__item" key={f.q}>
               <summary className="faq__q">{f.q}</summary>

@@ -1,4 +1,5 @@
 import { backend, brand, packages } from "../site.config.js";
+import { getClient } from "./supa.js";
 
 export const backendReady = Boolean(backend.supabaseUrl && backend.supabaseKey);
 
@@ -38,14 +39,8 @@ export function validateOrder(o) {
   if (o.lastName.trim().length < 2) errors.lastName = "اكتب اللقب تاعك.";
   if (!isValidPhone(o.phone)) errors.phone = "الرقم ناقص ولا غالط. مثال: 0559555313";
   if (o.activity.trim().length < 2) errors.activity = "قولنا واش هو النشاط تاعك.";
+  if (o.offer.trim().length < 3) errors.offer = "اكتب واش تبيع، باش نحضرو المحتوى على حسابك.";
   return errors;
-}
-
-function headers() {
-  const h = { "Content-Type": "application/json", apikey: backend.supabaseKey };
-  // المفاتيح القديمة (JWT) لازمها Authorization، الجديدة (sb_publishable_) يكفيها apikey
-  if (backend.supabaseKey.startsWith("eyJ")) h.Authorization = `Bearer ${backend.supabaseKey}`;
-  return h;
 }
 
 // يسجل الطلب في قاعدة البيانات ويرجع رمز الطلب.
@@ -53,28 +48,81 @@ function headers() {
 export async function submitOrder(o) {
   if (!backendReady) return { ok: false, reason: "no-backend" };
   try {
-    const res = await fetch(`${backend.supabaseUrl}/rest/v1/rpc/create_order`, {
-      method: "POST",
-      headers: headers(),
-      body: JSON.stringify({
-        p_first_name: o.firstName.trim(),
-        p_last_name: o.lastName.trim(),
-        p_phone: normalizePhone(o.phone),
-        p_activity: o.activity.trim(),
-        p_package: o.packageId,
-        p_has_pages: o.hasPages,
-        p_facebook: o.hasPages ? o.facebook.trim() : "",
-        p_instagram: o.hasPages ? o.instagram.trim() : "",
-        p_tiktok: o.hasPages ? o.tiktok.trim() : "",
-        p_notes: o.notes.trim(),
-      }),
+    const client = await getClient();
+    const { data, error } = await client.rpc("create_order", {
+      p_first_name: o.firstName.trim(),
+      p_last_name: o.lastName.trim(),
+      p_phone: normalizePhone(o.phone),
+      p_activity: o.activity.trim(),
+      p_package: o.packageId,
+      p_offer: o.offer.trim(),
+      p_has_pages: o.hasPages,
+      p_facebook: o.hasPages ? o.facebook.trim() : "",
+      p_instagram: o.hasPages ? o.instagram.trim() : "",
+      p_tiktok: o.hasPages ? o.tiktok.trim() : "",
+      p_notes: o.notes.trim(),
     });
-    if (res.ok) return { ok: true, code: await res.json() };
-    const body = await res.json().catch(() => ({}));
-    const msg = String(body.message || "");
+    if (!error) return { ok: true, code: data };
+    const msg = String(error.message || "");
     if (msg.includes("too_many_orders")) return { ok: false, reason: "too-many" };
     if (msg.includes("invalid_")) return { ok: false, reason: "invalid" };
     return { ok: false, reason: "server" };
+  } catch {
+    return { ok: false, reason: "network" };
+  }
+}
+
+// ── وصل الدفع ──
+// نصغرو الصورة ونحولوها JPEG قبل الرفع: تطلع بسرعة حتى بكونيكسيون ضعيفة.
+async function toJpeg(file) {
+  try {
+    const bitmap = await createImageBitmap(file);
+    const scale = Math.min(1, 1600 / Math.max(bitmap.width, bitmap.height));
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.round(bitmap.width * scale);
+    canvas.height = Math.round(bitmap.height * scale);
+    const ctx = canvas.getContext("2d");
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+    return await new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.85));
+  } catch {
+    return null;
+  }
+}
+
+function randomName() {
+  if (crypto.randomUUID) return crypto.randomUUID();
+  return Array.from(crypto.getRandomValues(new Uint8Array(16)), (b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+const PLAIN_TYPES = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp" };
+
+// يرفع صورة الوصل ويربطها بالطلب. يرجع { ok: true } ولا { ok: false, reason }
+// reason: "not-image" | "too-big" | "not-found" | "network"
+export async function uploadReceipt({ code, phone, file }) {
+  const cleanCode = String(code || "").trim().toUpperCase();
+  if (!/^RDZ-C-[A-Z0-9]{5}$/.test(cleanCode) || !isValidPhone(phone)) return { ok: false, reason: "not-found" };
+  if (!file || !file.type.startsWith("image/")) return { ok: false, reason: "not-image" };
+
+  let blob = await toJpeg(file);
+  let ext = "jpg";
+  if (!blob) {
+    // المتصفح ما قدرش يقرا الصورة: نبعثوها كيما هي إذا كانت من نوع مقبول
+    if (!PLAIN_TYPES[file.type]) return { ok: false, reason: "not-image" };
+    blob = file;
+    ext = PLAIN_TYPES[file.type];
+  }
+  if (blob.size > 5 * 1024 * 1024) return { ok: false, reason: "too-big" };
+
+  try {
+    const client = await getClient();
+    const path = `${cleanCode}/${randomName()}.${ext}`;
+    const up = await client.storage.from("receipts").upload(path, blob, { contentType: blob.type, upsert: false });
+    if (up.error) return { ok: false, reason: "network" };
+    const { error } = await client.rpc("attach_receipt", { p_code: cleanCode, p_phone: normalizePhone(phone), p_path: path });
+    if (!error) return { ok: true };
+    return { ok: false, reason: String(error.message || "").includes("order_not_found") ? "not-found" : "network" };
   } catch {
     return { ok: false, reason: "network" };
   }
@@ -90,6 +138,7 @@ export function orderWhatsAppLink(o) {
     `الاسم: ${o.firstName.trim()} ${o.lastName.trim()}`,
     `الهاتف: ${normalizePhone(o.phone)}`,
     `النشاط: ${o.activity.trim()}`,
+    `واش نبيع: ${o.offer.trim()}`,
   ];
   if (o.hasPages) {
     if (o.facebook.trim()) lines.push(`فيسبوك: ${o.facebook.trim()}`);

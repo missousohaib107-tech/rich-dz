@@ -54,10 +54,14 @@ export const customOffer = {
   line: "تحب أكثر من 14 فيديو في الأسبوع؟ تواصل معانا ونديرولك عرض يليق بيك.",
 };
 
-// الفيديو اللي تبان فيه بوجهك وتشرح الخدمة.
-// كي يوجد: حط الفيديو في public/media/intro/ وبدل null بـ:
-// { path: "media/intro", title: "صهيب يشرحلك الخدمة في دقيقة" }
-export const introVideo = null;
+// فيديو شرح الخدمة (موشن غرافيك، RDZ-INTRO-01). يبان الأول في واجهة الموقع.
+// كي تصور الفيديو بوجهك: حطو في مجلد جديد في public/media/ وبدل المسار هنا.
+export const introVideo = {
+  path: "media/intro",
+  title: "RICH DZ: كيفاش نخدمو",
+  flag: "شوف كيفاش نخدمو",
+  duration: "0:37",
+};
 
 // الأعمال. كل عمل هو مجلد فيه poster.jpg و hls/index.m3u8
 // الخمسة الأولين هوما اللي يبانو في واجهة الموقع.
@@ -179,9 +183,9 @@ export const works = [
 // شروحات "كيفاش تحل صفحة". كي يوجد الفيديو، بدل null بمسار المجلد
 // مثلا: path: "media/tuto-facebook"
 export const tutorials = [
-  { id: "facebook", name: "فيسبوك", title: "كيفاش تحل صفحة فيسبوك لمحلك", path: null },
-  { id: "instagram", name: "انستغرام", title: "كيفاش تحل حساب انستغرام مهني", path: null },
-  { id: "tiktok", name: "تيك توك", title: "كيفاش تحل حساب تيك توك لتجارتك", path: null },
+  { id: "facebook", name: "فيسبوك", title: "كيفاش تحل صفحة فيسبوك لمحلك", path: "media/tuto-facebook" },
+  { id: "instagram", name: "انستغرام", title: "كيفاش تحل حساب انستغرام مهني", path: "media/tuto-instagram" },
+  { id: "tiktok", name: "تيك توك", title: "كيفاش تحل حساب تيك توك لتجارتك", path: "media/tuto-tiktok" },
 ];
 
 export const activities = [

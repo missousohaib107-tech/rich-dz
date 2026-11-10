@@ -5,6 +5,7 @@ import "@fontsource-variable/reem-kufi/index.css";
 import "@fontsource/ibm-plex-mono/latin-600.css";
 import "./styles/tokens.css";
 import "./styles/site.css";
+import "./styles/motion.css";
 import App from "./App.jsx";
 
 ReactDOM.createRoot(document.getElementById("root")).render(

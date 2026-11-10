@@ -1,6 +1,7 @@
 import { introVideo, works } from "../site.config.js";
 import VideoTile from "./VideoTile.jsx";
 import { CheckIcon } from "./icons.jsx";
+import { Words } from "../lib/motion.jsx";
 
 export function Header() {
   return (
@@ -23,14 +24,14 @@ export function Header() {
 }
 
 export function Hero({ onPlay }) {
-  // الفيديو بوجهك (كي يوجد) يجي الأول، ومن بعدو الأعمال
+  // فيديو شرح الخدمة يجي الأول، ومن بعدو الأعمال
   const reel = works.slice(0, introVideo ? 4 : 5);
 
   return (
     <section className="hero" id="top">
       <div className="wrap hero__grid">
         <div>
-          <h1 className="hero__title">محتوى محلك، جاهز كل أسبوع</h1>
+          <Words as="h1" className="hero__title" text="محتوى محلك، جاهز كل أسبوع" step={110} />
           <p className="hero__lead">
             كل يوم فيديو وصورة إعلانية لصفحاتك في فيسبوك، انستغرام وتيك توك. تخلّص بالأسبوع، المحتوى
             يوصلك جاهز، ونوريوك كيفاش تنشرو.

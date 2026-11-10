@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { formatDZD, imagesLabel } from "../lib/orders.js";
-import { currentUser, isAdmin, listOrders, live, signIn, signOut, updateOrder } from "./data.js";
+import { currentUser, isAdmin, listOrders, live, receiptUrl, signIn, signOut, updateOrder } from "./data.js";
 
 const relative = new Intl.RelativeTimeFormat("ar-DZ", { numeric: "auto" });
 const dateOnly = new Intl.DateTimeFormat("ar-DZ", { day: "numeric", month: "long" });
@@ -111,6 +111,177 @@ function Stepper({ label, done, total, onChange }) {
   );
 }
 
+function CopyButton({ text, label = "انسخ" }) {
+  const [done, setDone] = useState(false);
+  return (
+    <button
+      type="button"
+      className="btn btn--line btn--small"
+      onClick={() => {
+        if (!navigator.clipboard) return;
+        navigator.clipboard.writeText(text).then(() => {
+          setDone(true);
+          setTimeout(() => setDone(false), 1800);
+        });
+      }}
+    >
+      {done ? "تنسخ" : label}
+    </button>
+  );
+}
+
+// طلب جاهز تلصقو في Claude كي تحب تحضر الخطة بيدك
+function claudeBrief(o) {
+  const pages = [o.facebook_url, o.instagram_url, o.tiktok_url].filter(Boolean).join("، ");
+  return [
+    "حضّرلي خطة محتوى أسبوع لزبون RICH DZ.",
+    `الزبون: ${o.first_name} ${o.last_name}`,
+    `النشاط: ${o.activity}`,
+    `واش يبيع: ${o.offer || "ما كتبش"}`,
+    `الباقة: ${o.videos_total} فيديو و${imagesLabel(o.images_total)} في الأسبوع`,
+    `الصفحات: ${o.has_pages ? pages || "ما كتبش الروابط" : "ما عندوش صفحات مازال"}`,
+    o.notes ? `ملاحظة الزبون: ${o.notes}` : null,
+    "",
+    "لكل فيديو: الفكرة، السكريبت بالدارجة، برومبت الفيديو، برومبت الصورة، والكابشن. كلش جاهز للنسخ.",
+  ]
+    .filter((line) => line !== null)
+    .join("\n");
+}
+
+const RECEIPT_STATE = {
+  waiting: "الوصل ترفع. قارنو مع حسابك وأكّد الدفع.",
+  ok: "Claude قرا الوصل: المبلغ والحساب يطابقو.",
+  problem: "Claude قرا الوصل: فيه حاجة ماشي هي.",
+};
+
+function Receipt({ order: o }) {
+  const [url, setUrl] = useState(null);
+  const [failed, setFailed] = useState(false);
+
+  if (!o.receipt_path) return null;
+
+  async function show() {
+    setFailed(false);
+    try {
+      setUrl(await receiptUrl(o.receipt_path));
+    } catch {
+      setFailed(true);
+    }
+  }
+
+  return (
+    <section className={`receipt receipt--${o.payment_status === "paid" ? "paid" : o.receipt_check}`}>
+      <div className="receipt__head">
+        <div>
+          <h3 className="card__sub">وصل الدفع</h3>
+          <p className="receipt__state">
+            {o.payment_status === "paid" && o.receipt_check !== "problem" ? "الدفع مأكد." : RECEIPT_STATE[o.receipt_check] || RECEIPT_STATE.waiting}
+          </p>
+        </div>
+        {!url && (
+          <button type="button" className="btn btn--line btn--small" onClick={show}>
+            شوف الوصل
+          </button>
+        )}
+      </div>
+      {o.receipt_note && <p className="receipt__note">{o.receipt_note}</p>}
+      {failed && (
+        <p className="field__error" role="alert">
+          الصورة ما تحملتش. عاود جرب.
+        </p>
+      )}
+      {url && (
+        <a className="receipt__img" href={url} target="_blank" rel="noopener">
+          <img src={url} alt={`وصل الدفع تاع ${o.first_name} ${o.last_name}`} />
+        </a>
+      )}
+      {o.payment_status !== "paid" && <p className="receipt__warn">الصورة وحدها ماشي دليل. تأكد بلي الدراهم دخلو لحسابك قبل ما تأكد.</p>}
+    </section>
+  );
+}
+
+const PLAN_PARTS = [
+  ["script", "السكريبت"],
+  ["video_prompt", "برومبت الفيديو"],
+  ["image_prompt", "برومبت الصورة"],
+  ["caption", "الكابشن"],
+];
+
+function Plan({ order: o }) {
+  const items = o.plan?.items || [];
+
+  if (!items.length) {
+    return (
+      <section className="plan">
+        <h3 className="card__sub">خطة المحتوى</h3>
+        <p className="plan__empty">الخطة مازال ما تحضرتش لهذا الزبون.</p>
+        <CopyButton text={claudeBrief(o)} label="انسخ الطلب لـ Claude" />
+      </section>
+    );
+  }
+
+  return (
+    <section className="plan">
+      <h3 className="card__sub">
+        خطة المحتوى <span className="plan__n">{items.length} من {o.videos_total}</span>
+      </h3>
+      {o.plan.summary && <p className="plan__summary">{o.plan.summary}</p>}
+      {items.map((it, i) => (
+        <details className="plan__item" key={i}>
+          <summary className="plan__q">
+            <span className="plan__day latin">{it.day ?? i + 1}</span>
+            {it.idea}
+          </summary>
+          {PLAN_PARTS.filter(([key]) => it[key]).map(([key, label]) => (
+            <div className="plan__part" key={key}>
+              <div className="plan__bar">
+                <span className="plan__label">{label}</span>
+                <CopyButton text={it[key]} />
+              </div>
+              <p className="plan__text" dir="auto">
+                {it[key]}
+              </p>
+            </div>
+          ))}
+        </details>
+      ))}
+    </section>
+  );
+}
+
+// يبعث للزبون رابط المعاينة تاع فيديو واجد
+function SendPreview({ order: o, intl }) {
+  const [code, setCode] = useState("");
+  const clean = code.trim().toUpperCase();
+  const valid = /^[A-Z0-9][A-Z0-9-]{2,40}$/.test(clean);
+  const link = `${window.location.origin}${import.meta.env.BASE_URL}preview/${clean}/`;
+  const text = `السلام عليكم ${o.first_name}،\nالفيديو تاعك واجد للمعاينة:\n${link}\nرمز الفيديو: ${clean}\nشوفو وقولنا إذا تحب تبدل حاجة.`;
+
+  return (
+    <section className="send">
+      <h3 className="card__sub">ابعث فيديو للزبون</h3>
+      <div className="send__row">
+        <input
+          className="input latin"
+          aria-label="رمز الفيديو"
+          placeholder="رمز الفيديو، مثلا RDZ-KIP-0111"
+          value={code}
+          onChange={(e) => setCode(e.target.value)}
+        />
+        {valid ? (
+          <a className="btn btn--wa" href={`https://wa.me/${intl}?text=${encodeURIComponent(text)}`} target="_blank" rel="noopener">
+            ابعث المعاينة
+          </a>
+        ) : (
+          <button type="button" className="btn btn--line" disabled>
+            ابعث المعاينة
+          </button>
+        )}
+      </div>
+    </section>
+  );
+}
+
 function OrderCard({ order: o, position, onPatch }) {
   const [note, setNote] = useState(o.admin_notes);
   useEffect(() => setNote(o.admin_notes), [o.admin_notes]);
@@ -167,7 +338,17 @@ function OrderCard({ order: o, position, onPatch }) {
         </div>
       )}
 
+      <Receipt order={o} />
+      {(state === "queue" || o.plan || o.receipt_path) && state !== "cancelled" && <Plan order={o} />}
+      {state === "queue" && <SendPreview order={o} intl={intl} />}
+
       <dl className="card__facts">
+        {o.offer && (
+          <div>
+            <dt>واش يبيع</dt>
+            <dd>{o.offer}</dd>
+          </div>
+        )}
         <div>
           <dt>الصفحات</dt>
           <dd>

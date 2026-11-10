@@ -8,6 +8,7 @@ import {
   packageById,
   receiptWhatsAppLink,
   submitOrder,
+  uploadReceipt,
   validateOrder,
 } from "../lib/orders.js";
 import { CheckIcon, WhatsAppIcon } from "./icons.jsx";
@@ -20,6 +21,7 @@ const empty = {
   phone: "",
   activityChoice: "",
   activityOther: "",
+  offer: "",
   hasPages: true,
   facebook: "",
   instagram: "",
@@ -64,8 +66,69 @@ function Field({ id, label, hint, error, children }) {
   );
 }
 
+const RECEIPT_ERRORS = {
+  "not-image": "هذا الملف ماشي صورة. ارفع صورة ولا سكرين شوت تاع الوصل.",
+  "too-big": "الصورة ثقيلة بزاف. ابعث سكرين شوت بلاصتها.",
+  "not-found": "ما لقيناش طلب بهذا الرمز وهذا الرقم. شوف الرمز ورقم الهاتف اللي طلبت بيه.",
+  network: "الصورة ما طلعتش. شوف الأنترنت وعاود، ولا ابعثها في واتساب.",
+};
+
+// رفع صورة وصل الدفع. إذا code و phone معروفين (بعد الطلب مباشرة) ما نسقسيوش عليهم.
+function ReceiptUpload({ code: knownCode, phone: knownPhone }) {
+  const [code, setCode] = useState(knownCode || "");
+  const [phone, setPhone] = useState(knownPhone || "");
+  const [state, setState] = useState("idle"); // idle | busy | done
+  const [error, setError] = useState("");
+  const id = knownCode ? "receipt-now" : "receipt-later";
+
+  async function onFile(e) {
+    const file = e.target.files[0];
+    e.target.value = "";
+    if (!file) return;
+    setState("busy");
+    setError("");
+    const result = await uploadReceipt({ code, phone, file });
+    if (result.ok) return setState("done");
+    setState("idle");
+    setError(RECEIPT_ERRORS[result.reason] || RECEIPT_ERRORS.network);
+  }
+
+  if (state === "done") {
+    return (
+      <p className="upload__done" role="status">
+        <CheckIcon />
+        الوصل وصلنا. نأكدو الدفع ويبدا الأسبوع تاعك.
+      </p>
+    );
+  }
+
+  return (
+    <div className="upload">
+      {!knownCode && (
+        <div className="form__pair">
+          <Field id="receipt-code" label="رمز الطلب">
+            <input className="input latin" id="receipt-code" placeholder="RDZ-C-" value={code} onChange={(e) => setCode(e.target.value)} />
+          </Field>
+          <Field id="receipt-phone" label="رقم الهاتف">
+            <input className="input latin" id="receipt-phone" type="tel" inputMode="tel" value={phone} onChange={(e) => setPhone(e.target.value)} />
+          </Field>
+        </div>
+      )}
+      <label className={state === "busy" ? "btn btn--gold btn--block upload__btn is-busy" : "btn btn--gold btn--block upload__btn"} htmlFor={id}>
+        {state === "busy" ? "الصورة راهي تطلع" : "ارفع صورة الوصل"}
+      </label>
+      <input className="upload__input" id={id} type="file" accept="image/*" onChange={onFile} disabled={state === "busy"} />
+      {error && (
+        <p className="field__error" role="alert">
+          {error}
+        </p>
+      )}
+    </div>
+  );
+}
+
 // وصل الطلب: يبان بعد ما يتسجل الطلب في قاعدة البيانات
-function OrderSlip({ code, pkg, onAgain }) {
+function OrderSlip({ code, phone, pkg, onAgain }) {
   const ref = useRef(null);
   useEffect(() => {
     ref.current?.focus();
@@ -96,7 +159,7 @@ function OrderSlip({ code, pkg, onAgain }) {
 
       <ol className="slip__steps">
         <li>خلّص المبلغ في واحد من الحسابين اللي تحت.</li>
-        <li>ابعثلنا صورة الوصل مع رمز الطلب.</li>
+        <li>ارفع صورة الوصل هنا في الموقع.</li>
         <li>نأكدو الدفع، والأسبوع تاعك يبدا في نفس النهار.</li>
       </ol>
 
@@ -119,10 +182,14 @@ function OrderSlip({ code, pkg, onAgain }) {
         </span>
       </div>
 
-      <a className="btn btn--wa btn--block" href={receiptWhatsAppLink(code)} target="_blank" rel="noopener">
+      <ReceiptUpload code={code} phone={phone} />
+
+      <a className="btn btn--line btn--block" href={receiptWhatsAppLink(code)} target="_blank" rel="noopener">
         <WhatsAppIcon />
-        ابعث الوصل في واتساب
+        ولا ابعث الوصل في واتساب
       </a>
+
+      <p className="form__after">تخلّص من بعد؟ احفظ رمز الطلب، وارجع ارفع الوصل من قسم «اطلب باقتك».</p>
 
       <button type="button" className="slip__again" onClick={onAgain}>
         طلب آخر
@@ -190,6 +257,7 @@ export default function OrderForm({ packageId, onPackage }) {
     return (
       <OrderSlip
         code={code}
+        phone={v.phone}
         pkg={packageById(packageId)}
         onAgain={() => {
           setV(empty);
@@ -317,6 +385,21 @@ export default function OrderForm({ packageId, onPackage }) {
             />
           </Field>
         )}
+        <Field
+          id="order-offer"
+          label="واش تبيع بالضبط؟"
+          hint="مثلا: ملابس نسائية وأحذية، ولا بيتزا وطاكوس، ولا قص وصباغة الشعر."
+          error={errors.offer}
+        >
+          <textarea
+            className="input input--short"
+            id="order-offer"
+            maxLength={600}
+            value={v.offer}
+            onChange={set("offer")}
+            {...invalid("offer")}
+          />
+        </Field>
       </fieldset>
 
       <fieldset className="form__group">
@@ -398,7 +481,7 @@ export function OrderSection({ packageId, onPackage }) {
   return (
     <section className="section order" id="order">
       <div className="wrap order__grid">
-        <div className="order__intro">
+        <div className="order__intro" data-reveal="up">
           <h2 className="section__title">اطلب باقتك</h2>
           <p className="section__lead">عمّر الطلب وحنا نتكفلو بالباقي. كلش يتسجل عندنا منظم، وما يضيع حتى تفصيل.</p>
           <ul className="order__points">
@@ -415,6 +498,12 @@ export function OrderSection({ packageId, onPackage }) {
               نوريوك كيفاش تنشر كل فيديو
             </li>
           </ul>
+          {backendReady && (
+            <details className="later">
+              <summary className="later__q">طلبت من قبل؟ ارفع وصل الدفع</summary>
+              <ReceiptUpload />
+            </details>
+          )}
         </div>
         <OrderForm packageId={packageId} onPackage={onPackage} />
       </div>

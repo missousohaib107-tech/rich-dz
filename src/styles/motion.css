@@ -1,0 +1,152 @@
+/* الحركة. تتفعّل غير كي الجافاسكريبت يزيد الكلاس .motion على <html>
+   والزائر ما طلبش تقليل الحركة. بلا هذا، كلش يبان في بلاصتو من الأول. */
+
+:root {
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* كلمات العنوان الكبير: تطلع وحدة بوحدة كي تتحل الصفحة */
+@media (prefers-reduced-motion: no-preference) {
+  .word {
+    display: inline-block;
+    animation: wordUp 0.9s var(--ease) both;
+    animation-delay: var(--w, 0ms);
+  }
+
+  .hero__lead,
+  .hero__actions,
+  .hero__facts {
+    animation: softUp 0.9s var(--ease) both;
+  }
+
+  .hero__lead { animation-delay: 420ms; }
+  .hero__actions { animation-delay: 560ms; }
+  .hero__facts { animation-delay: 700ms; }
+
+  .btn {
+    transition: background-color 0.15s, border-color 0.15s, color 0.15s, transform 0.12s;
+  }
+
+  .btn:active {
+    transform: scale(0.97);
+  }
+}
+
+@keyframes wordUp {
+  from {
+    opacity: 0;
+    transform: translateY(0.55em) rotate(2deg);
+  }
+}
+
+@keyframes softUp {
+  from {
+    opacity: 0;
+    transform: translateY(22px);
+  }
+}
+
+/* ── كي العنصر يدخل للشاشة ── */
+.motion [data-reveal="up"] {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 0.8s var(--ease), transform 0.8s var(--ease);
+  transition-delay: calc(var(--i, 0) * 90ms);
+}
+
+.motion [data-reveal="up"].is-in {
+  opacity: 1;
+  transform: none;
+}
+
+/* مجموعة: الأولاد يدخلو واحد ورا واحد */
+.motion [data-reveal="each"] > * {
+  opacity: 0;
+  transform: translateY(34px);
+  transition: opacity 0.8s var(--ease), transform 0.8s var(--ease);
+  transition-delay: calc(var(--i, 0) * 80ms);
+}
+
+.motion [data-reveal="each"].is-in > * {
+  opacity: 1;
+  transform: none;
+}
+
+/* الخطوات: الخط الذهبي يترسم، ومن بعد الرقم والكتابة */
+@media (min-width: 900px) {
+  .motion .steps[data-reveal="each"] > * {
+    border-top-color: transparent;
+    background: linear-gradient(var(--gold), var(--gold)) right top / 0% 2px no-repeat;
+    transition: opacity 0.8s var(--ease), transform 0.8s var(--ease), background-size 0.9s var(--ease);
+    transition-delay: calc(var(--i, 0) * 160ms);
+  }
+
+  .motion .steps[data-reveal="each"].is-in > * {
+    background-size: 100% 2px;
+  }
+}
+
+/* الباقات: خانات الأسبوع تتعمر يوم بيوم */
+.motion [data-reveal="week"] .week__day--on {
+  background: var(--raised);
+  transform: scaleY(0.5);
+  transition: background-color 0.35s ease-out, transform 0.5s var(--ease);
+  transition-delay: calc(200ms + var(--c, 0) * 75ms);
+}
+
+.motion [data-reveal="week"].is-in .week__day--on {
+  background: var(--gold);
+  transform: none;
+}
+
+.motion [data-reveal="week"] > :not(.rate__week) {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.8s var(--ease), transform 0.8s var(--ease);
+}
+
+.motion [data-reveal="week"].is-in > :not(.rate__week) {
+  opacity: 1;
+  transform: none;
+}
+
+/* بلاطات الفيديو */
+.tile__play {
+  transition: transform 0.25s var(--ease), background-color 0.2s;
+}
+
+.tile:hover .tile__play {
+  transform: scale(1.12);
+  background: var(--gold);
+  color: var(--gold-ink);
+}
+
+/* مشغل الفيديو يتحل بنعومة */
+@media (prefers-reduced-motion: no-preference) {
+  .player[open] {
+    animation: playerIn 0.35s var(--ease);
+  }
+
+  .player[open]::backdrop {
+    animation: fadeIn 0.3s ease-out;
+  }
+
+  .faq__item[open] .faq__a,
+  .slip,
+  .upload__done {
+    animation: softUp 0.5s var(--ease);
+  }
+}
+
+@keyframes playerIn {
+  from {
+    opacity: 0;
+    transform: translateY(24px) scale(0.96);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+}

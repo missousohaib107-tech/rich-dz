@@ -4,12 +4,14 @@ import { Header, Hero } from "./components/Hero.jsx";
 import { Faq, Footer, Guides, Packages, Sites, WeekSteps, Works } from "./components/Sections.jsx";
 import { OrderSection } from "./components/OrderForm.jsx";
 import VideoDialog from "./components/VideoDialog.jsx";
+import { useScrollMotion } from "./lib/motion.jsx";
 
 const defaultPackage = packages[0].id;
 
 export default function App() {
   const [packageId, setPackageId] = useState(defaultPackage);
   const [playing, setPlaying] = useState(null);
+  useScrollMotion();
 
   return (
     <>
