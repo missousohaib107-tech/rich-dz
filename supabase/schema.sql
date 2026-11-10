@@ -308,6 +308,23 @@ $$;
 revoke all on function public.attach_material(text, text, text) from public;
 grant execute on function public.attach_material(text, text, text) to anon, authenticated;
 
+-- سطر في كل مرة مهمة Claude المجدولة تشوف الطلبيات، باش اللوحة تبين وقتاش دارت آخر دورة
+create table if not exists public.task_runs (
+  id        bigint generated always as identity primary key,
+  ran_at    timestamptz not null default now(),
+  prepared  int not null default 0,
+  note      text not null default ''
+);
+
+alter table public.task_runs enable row level security;
+
+drop policy if exists "admin reads task runs" on public.task_runs;
+create policy "admin reads task runs" on public.task_runs
+  for select to authenticated using (app_private.is_admin());
+
+revoke all on public.task_runs from anon, authenticated;
+grant select on public.task_runs to authenticated;
+
 -- نداء خفيف يخلي المشروع المجاني صاحي (يناديه GitHub Actions كل يوم)
 create or replace function public.ping()
 returns timestamptz language sql stable set search_path = '' as $$ select now(); $$;

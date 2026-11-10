@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { formatDZD, imagesLabel } from "../lib/orders.js";
-import { currentUser, fileUrls, isAdmin, listOrders, live, receiptUrl, signIn, signOut, updateOrder } from "./data.js";
+import { currentUser, fileUrls, isAdmin, lastTaskRun, listOrders, live, receiptUrl, signIn, signOut, updateOrder } from "./data.js";
 
 const relative = new Intl.RelativeTimeFormat("ar-DZ", { numeric: "auto" });
 const dateOnly = new Intl.DateTimeFormat("ar-DZ", { day: "numeric", month: "long" });
@@ -510,11 +510,13 @@ function Board({ onSignOut }) {
   const [tab, setTab] = useState(null);
   const [problem, setProblem] = useState("");
   const [loading, setLoading] = useState(false);
+  const [taskRun, setTaskRun] = useState(null);
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
       setOrders(await listOrders());
+      setTaskRun(await lastTaskRun());
       setProblem("");
     } catch {
       setProblem("الطلبيات ما تحملوش. شوف الأنترنت وعاود.");
@@ -602,6 +604,12 @@ function Board({ onSignOut }) {
             <p className="sum__value latin">{groups.unpaid.length}</p>
           </div>
         </section>
+
+        {live && (
+          <p className="board__task">
+            {taskRun ? `Claude شاف الطلبيات ${timeAgo(taskRun.ran_at)}.` : "Claude مازال ما شافش الطلبيات. المهمة تدور مرة في الساعة."}
+          </p>
+        )}
 
         <div className="tabs" role="tablist" aria-label="الطلبيات">
           {TABS.map((t) => (

@@ -151,3 +151,11 @@ export async function receiptUrl(path) {
   if (!url) throw new Error("no receipt url");
   return url;
 }
+
+// آخر مرة مهمة Claude المجدولة شافت الطلبيات. null إذا مازال ما دارتش ولا مرة.
+export async function lastTaskRun() {
+  if (!live) return null;
+  const { data, error } = await supabase.from("task_runs").select("ran_at, prepared").order("ran_at", { ascending: false }).limit(1);
+  if (error || !data.length) return null;
+  return data[0];
+}
