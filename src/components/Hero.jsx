@@ -11,43 +11,43 @@ export function Header() {
           RICH DZ
         </a>
         <nav className="top__nav" aria-label="أقسام الصفحة">
-          <a href="#packages">الباقات</a>
+          <a href="#packages">العروض</a>
           <a href="#works">أعمالنا</a>
           <a href="#faq">أسئلة</a>
         </nav>
-        <a className="btn btn--gold btn--small" href="#order">
-          اطلب باقتك
+        <a className="btn btn--main btn--small" href="#order">
+          اطلب دروك
         </a>
       </div>
     </header>
   );
 }
 
-export function Hero({ onPlay }) {
+export function Hero({ onPlay, onChoose }) {
   // فيديو شرح الخدمة يجي الأول، ومن بعدو الأعمال
   const reel = works.slice(0, introVideo ? 4 : 5);
 
   return (
-    <section className="hero" id="top">
+    <section className="hero dark" id="top">
       <div className="wrap hero__grid">
         <div>
           <Words as="h1" className="hero__title" text="محتوى محلك، جاهز كل أسبوع" step={110} />
           <p className="hero__lead">
-            كل يوم فيديو وصورة إعلانية لصفحاتك في فيسبوك، انستغرام وتيك توك. تخلّص بالأسبوع، المحتوى
-            يوصلك جاهز، ونوريوك كيفاش تنشرو.
+            فيديوهات وصور إعلانية لصفحاتك في فيسبوك، انستغرام وتيك توك. جرّب بفيديو مجاني، ومن بعد خيّر
+            فيديو واحد ولا باقة أسبوع كامل.
           </p>
           <div className="hero__actions">
-            <a className="btn btn--gold" href="#packages">
-              اختار باقتك
+            <a className="btn btn--main" href="#order" onClick={() => onChoose("trial")}>
+              جرّب بفيديو مجاني
             </a>
-            <a className="btn btn--line" href="#works">
-              شوف أعمالنا
+            <a className="btn btn--line" href="#packages">
+              شوف العروض
             </a>
           </div>
           <ul className="hero__facts">
             <li>
               <CheckIcon />
-              الدفع بالأسبوع
+              فيديو تجريبي مجاني
             </li>
             <li>
               <CheckIcon />

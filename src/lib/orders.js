@@ -13,7 +13,18 @@ export function imagesLabel(n) {
 }
 
 export function contentsLabel(p) {
+  if (p.kind === "trial") return `فيديو ${p.seconds} ثانية`;
+  if (!p.images) return p.videos === 1 ? "فيديو واحد" : `${p.videos} فيديو`;
   return `${p.videos} فيديو و${imagesLabel(p.images)}`;
+}
+
+export function priceLabel(p) {
+  return p.price === 0 ? "مجاني" : `${formatDZD(p.price)} دج`;
+}
+
+// سعر الفيديو الواحد داخل باقة، مقرّب لأقرب 10 دج
+export function perVideo(p) {
+  return Math.round(p.price / p.videos / 10) * 10;
 }
 
 export function packageById(id) {
@@ -65,6 +76,8 @@ export async function submitOrder(o) {
     if (!error) return { ok: true, code: data };
     const msg = String(error.message || "");
     if (msg.includes("too_many_orders")) return { ok: false, reason: "too-many" };
+    if (msg.includes("trial_used")) return { ok: false, reason: "trial-used" };
+    if (msg.includes("trial_full")) return { ok: false, reason: "trial-full" };
     if (msg.includes("invalid_")) return { ok: false, reason: "invalid" };
     return { ok: false, reason: "server" };
   } catch {
@@ -144,7 +157,9 @@ export function orderWhatsAppLink(o) {
   const p = packageById(o.packageId);
   const lines = [
     "السلام عليكم، حاب نطلب باقة محتوى",
-    `الباقة: ${p.name} (${contentsLabel(p)}) بـ ${formatDZD(p.price)} دج في الأسبوع`,
+    p.kind === "week"
+      ? `الباقة: ${p.name} (${contentsLabel(p)}) بـ ${formatDZD(p.price)} دج في الأسبوع`
+      : `الطلب: ${p.name}، ${priceLabel(p)}`,
     `الاسم: ${o.firstName.trim()} ${o.lastName.trim()}`,
     `الهاتف: ${normalizePhone(o.phone)}`,
     `النشاط: ${o.activity.trim()}`,

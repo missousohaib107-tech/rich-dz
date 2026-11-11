@@ -79,7 +79,7 @@ export default function VideoDialog({ video, onClose }) {
   return (
     <dialog
       ref={dialogRef}
-      className="player"
+      className="player dark"
       onClose={onClose}
       onClick={(e) => {
         if (e.target === dialogRef.current) dialogRef.current.close();

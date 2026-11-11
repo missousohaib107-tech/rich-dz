@@ -79,7 +79,7 @@ function SignIn({ onDone }) {
             الإيمايل ولا كلمة السر غالطين.
           </p>
         )}
-        <button className="btn btn--gold btn--block" disabled={busy}>
+        <button className="btn btn--main btn--block" disabled={busy}>
           {busy ? "راهو يدخل" : "ادخل"}
         </button>
       </form>
@@ -130,6 +130,14 @@ function CopyButton({ text, label = "انسخ" }) {
   );
 }
 
+// واش فيه الطلب، كيما يتكتب في البطاقة
+function packLabel(o) {
+  if (o.package_id === "trial") return "فيديو تجريبي، 20 ثانية";
+  if (o.package_id === "single") return "فيديو واحد";
+  const contents = o.images_total ? `${o.videos_total} فيديو و${imagesLabel(o.images_total)}` : `${o.videos_total} فيديو`;
+  return `باقة ${o.package_name}: ${contents}`;
+}
+
 // طلب جاهز تلصقو في Claude كي تحب تحضر الخطة بيدك
 function claudeBrief(o) {
   const pages = [o.facebook_url, o.instagram_url, o.tiktok_url].filter(Boolean).join("، ");
@@ -138,7 +146,7 @@ function claudeBrief(o) {
     `الزبون: ${o.first_name} ${o.last_name}`,
     `النشاط: ${o.activity}`,
     `واش يبيع: ${o.offer || "ما كتبش"}`,
-    `الباقة: ${o.videos_total} فيديو و${imagesLabel(o.images_total)} في الأسبوع`,
+    `الطلب: ${packLabel(o)}`,
     `الصفحات: ${o.has_pages ? pages || "ما كتبش الروابط" : "ما عندوش صفحات مازال"}`,
     o.notes ? `ملاحظة الزبون: ${o.notes}` : null,
     "",
@@ -379,18 +387,24 @@ function OrderCard({ order: o, position, onPatch }) {
       </div>
 
       <p className="card__pack">
-        <span>
-          باقة {o.package_name}: {o.videos_total} فيديو و{imagesLabel(o.images_total)}
-        </span>
+        <span>{packLabel(o)}</span>
         <strong>
-          <span className="latin">{formatDZD(o.price_dzd)}</span> دج
+          {o.price_dzd === 0 ? (
+            "مجاني"
+          ) : (
+            <>
+              <span className="latin">{formatDZD(o.price_dzd)}</span> دج
+            </>
+          )}
         </strong>
       </p>
 
       {state === "queue" && (
         <div className="card__work">
           <Stepper label="الفيديوهات" done={o.videos_done} total={o.videos_total} onChange={(n) => progress({ videos_done: n })} />
-          <Stepper label="الصور" done={o.images_done} total={o.images_total} onChange={(n) => progress({ images_done: n })} />
+          {o.images_total > 0 && (
+            <Stepper label="الصور" done={o.images_done} total={o.images_total} onChange={(n) => progress({ images_done: n })} />
+          )}
         </div>
       )}
 
@@ -453,7 +467,7 @@ function OrderCard({ order: o, position, onPatch }) {
           <>
             <button
               type="button"
-              className="btn btn--gold"
+              className="btn btn--main"
               onClick={() => onPatch(o.id, { payment_status: "paid", paid_at: new Date().toISOString() })}
             >
               أكّد الدفع
@@ -471,7 +485,7 @@ function OrderCard({ order: o, position, onPatch }) {
           <>
             <button
               type="button"
-              className={allDone ? "btn btn--gold" : "btn btn--line"}
+              className={allDone ? "btn btn--main" : "btn btn--line"}
               onClick={() =>
                 (allDone || window.confirm("مازال ما كملتش كل الفيديوهات والصور. تسجلها مسلّمة؟")) &&
                 onPatch(o.id, { work_status: "delivered" })
@@ -479,7 +493,7 @@ function OrderCard({ order: o, position, onPatch }) {
             >
               سجّلها مسلّمة
             </button>
-            {o.videos_done === 0 && o.images_done === 0 && (
+            {o.price_dzd > 0 && o.videos_done === 0 && o.images_done === 0 && (
               <button
                 type="button"
                 className="card__undo"

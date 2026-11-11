@@ -12,17 +12,22 @@
 1. يقرا الطلبيات اللي تستنى خطة (مخلّصة، ولا الزبون رفع الوصل تاعها):
 
    ```sql
-   select id, code, first_name, activity, offer, package_name, videos_total, images_total,
-          has_pages, facebook_url, instagram_url, tiktok_url, notes
+   select id, code, first_name, activity, offer, package_id, package_name, videos_total, images_total,
+          price_dzd, has_pages, facebook_url, instagram_url, tiktok_url, notes
    from public.orders
    where plan is null
      and work_status in ('new', 'in_progress')
      and (payment_status = 'paid' or receipt_path is not null)
-   order by coalesce(paid_at, receipt_at)
-   limit 5;
+   order by coalesce(paid_at, receipt_at, created_at)
+   limit 4;
    ```
 
-2. لكل طلبية يكتب خطة أسبوع بهذا الشكل (عدد `items` = `videos_total`):
+2. لكل طلبية يكتب خطة بهذا الشكل (عدد `items` = `videos_total`):
+
+   - `trial` (الفيديو التجريبي المجاني): عنصر واحد، فيديو 20 ثانية على المنتوج الرئيسي، بلا برومبت صورة.
+     الطلب المجاني يتسجل `paid` بسعر 0، على هذا يدخل للخدمة مباشرة.
+   - `single` (فيديو واحد): عنصر واحد، 20 إلى 30 ثانية، بلا برومبت صورة.
+   - `daily` و`double` (باقات الأسبوع): عنصر لكل فيديو، مع برومبت صورة لكل يوم.
 
    ```json
    {

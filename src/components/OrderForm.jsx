@@ -150,7 +150,7 @@ function ReceiptUpload({ code, phone, later = false }) {
 
   return (
     <div className="upload">
-      <label className={state === "busy" ? "btn btn--gold btn--block upload__btn is-busy" : "btn btn--gold btn--block upload__btn"} htmlFor={id}>
+      <label className={state === "busy" ? "btn btn--main btn--block upload__btn is-busy" : "btn btn--main btn--block upload__btn"} htmlFor={id}>
         {state === "busy" ? "الصورة راهي تطلع" : "ارفع صورة الوصل"}
       </label>
       <input className="upload__input" id={id} type="file" accept="image/*" onChange={onFile} disabled={state === "busy"} />
@@ -189,6 +189,7 @@ function OrderSlip({ code, phone, pkg, onAgain }) {
   useEffect(() => {
     ref.current?.focus();
   }, []);
+  const free = pkg.price === 0;
 
   return (
     <div className="slip">
@@ -206,52 +207,68 @@ function OrderSlip({ code, phone, pkg, onAgain }) {
 
       <div className="slip__box">
         <span className="slip__label">
-          باقة {pkg.name}: {contentsLabel(pkg)}
+          {pkg.kind === "week" ? `باقة ${pkg.name}: ${contentsLabel(pkg)}` : pkg.kind === "trial" ? `${pkg.name}: ${contentsLabel(pkg)}` : pkg.name}
         </span>
         <span className="slip__amount">
-          <span className="latin">{formatDZD(pkg.price)}</span> دج للأسبوع
+          {free ? (
+            "مجاني"
+          ) : (
+            <>
+              <span className="latin">{formatDZD(pkg.price)}</span> دج{pkg.kind === "week" ? " للأسبوع" : ""}
+            </>
+          )}
         </span>
       </div>
 
-      <ol className="slip__steps">
-        <li>خلّص المبلغ في واحد من الحسابين اللي تحت.</li>
-        <li>ارفع صورة الوصل هنا في الموقع.</li>
-        <li>نأكدو الدفع، والأسبوع تاعك يبدا في نفس النهار.</li>
-      </ol>
+      {free ? (
+        <ol className="slip__steps">
+          <li>ارفع صور المنتوج واللوغو تحت.</li>
+          <li>نخدمولك فيديو {pkg.seconds} ثانية ونبعثولك رابط تشوفو فيه.</li>
+          <li>عجبك؟ خيّر فيديو واحد ولا باقة.</li>
+        </ol>
+      ) : (
+        <>
+          <ol className="slip__steps">
+            <li>خلّص المبلغ في واحد من الحسابين اللي تحت.</li>
+            <li>ارفع صورة الوصل هنا في الموقع.</li>
+            <li>نأكدو الدفع ونبداو الخدمة. الدفع قبل الخدمة.</li>
+          </ol>
+
+          <div className="slip__box">
+            <span className="slip__label">BaridiMob (RIP)</span>
+            <div className="slip__row">
+              <span className="code slip__num">{payment.rip}</span>
+              <CopyButton text={payment.rip} />
+            </div>
+          </div>
+
+          <div className="slip__box">
+            <span className="slip__label">CCP</span>
+            <div className="slip__row">
+              <span className="code slip__num">{payment.ccp}</span>
+              <CopyButton text={payment.ccp} />
+            </div>
+            <span className="slip__label">
+              صاحب الحساب: <bdi>{payment.holder}</bdi>
+            </span>
+          </div>
+
+          <ReceiptUpload code={code} phone={phone} />
+
+          <a className="btn btn--line btn--block" href={receiptWhatsAppLink(code)} target="_blank" rel="noopener">
+            <WhatsAppIcon />
+            ولا ابعث الوصل في واتساب
+          </a>
+        </>
+      )}
 
       <div className="slip__box">
-        <span className="slip__label">BaridiMob (RIP)</span>
-        <div className="slip__row">
-          <span className="code slip__num">{payment.rip}</span>
-          <CopyButton text={payment.rip} />
-        </div>
-      </div>
-
-      <div className="slip__box">
-        <span className="slip__label">CCP</span>
-        <div className="slip__row">
-          <span className="code slip__num">{payment.ccp}</span>
-          <CopyButton text={payment.ccp} />
-        </div>
-        <span className="slip__label">
-          صاحب الحساب: <bdi>{payment.holder}</bdi>
-        </span>
-      </div>
-
-      <ReceiptUpload code={code} phone={phone} />
-
-      <a className="btn btn--line btn--block" href={receiptWhatsAppLink(code)} target="_blank" rel="noopener">
-        <WhatsAppIcon />
-        ولا ابعث الوصل في واتساب
-      </a>
-
-      <div className="slip__box">
-        <span className="slip__label">باش نبداو المحتوى تاعك</span>
-        <p className="slip__text">ابعثلنا صور المنتوج واللوغو إذا عندك. كل ما كانت الصور واضحة، الفيديوهات يخرجو خير.</p>
+        <span className="slip__label">{free ? "صور المنتوج" : "باش نبداو المحتوى تاعك"}</span>
+        <p className="slip__text">ابعثلنا صور المنتوج واللوغو إذا عندك. كل ما كانت الصور واضحة، الفيديو يخرج خير.</p>
         <MaterialsUpload code={code} phone={phone} />
       </div>
 
-      <p className="form__after">تخلّص من بعد؟ احفظ رمز الطلب، وارجع ارفع الوصل من قسم «اطلب باقتك».</p>
+      {!free && <p className="form__after">تخلّص من بعد؟ احفظ رمز الطلب، وارجع ارفع الوصل من قسم الطلب.</p>}
 
       <button type="button" className="slip__again" onClick={onAgain}>
         طلب آخر
@@ -265,7 +282,7 @@ export default function OrderForm({ packageId, onPackage }) {
   const [errors, setErrors] = useState({});
   const [status, setStatus] = useState("idle"); // idle | sending | done | whatsapp
   const [code, setCode] = useState("");
-  const [problem, setProblem] = useState(null); // null | "offline" | "too-many"
+  const [problem, setProblem] = useState(null); // null | "offline" | "too-many" | "trial-used" | "trial-full"
 
   // كي الزبون يصحح خانة، رسالة الخطأ تاعها تروح
   const set = (key) => (e) => {
@@ -312,7 +329,7 @@ export default function OrderForm({ packageId, onPackage }) {
       return;
     }
     setStatus("idle");
-    setProblem(result.reason === "too-many" ? "too-many" : "offline");
+    setProblem(["too-many", "trial-used", "trial-full"].includes(result.reason) ? result.reason : "offline");
   }
 
   if (status === "done") {
@@ -350,7 +367,7 @@ export default function OrderForm({ packageId, onPackage }) {
   return (
     <form className="form" onSubmit={onSubmit} noValidate>
       <fieldset className="form__group">
-        <legend className="form__legend">الباقة</legend>
+        <legend className="form__legend">العرض</legend>
         {packages.map((p) => (
           <label className="pick" key={p.id}>
             <input
@@ -364,11 +381,11 @@ export default function OrderForm({ packageId, onPackage }) {
             <span className="pick__dot" aria-hidden="true" />
             <span className="pick__name">
               {p.name}
-              <span className="pick__sub">{contentsLabel(p)} في الأسبوع</span>
+              <span className="pick__sub">
+                {p.kind === "week" ? `${contentsLabel(p)} في الأسبوع` : p.kind === "trial" ? `${p.seconds} ثانية، مرة وحدة لكل زبون` : "فيديو إعلاني لمنتوجك"}
+              </span>
             </span>
-            <span className="pick__price">
-              <span className="latin">{formatDZD(p.price)}</span> دج
-            </span>
+            <span className="pick__price">{p.price === 0 ? "مجاني" : <><span className="latin">{formatDZD(p.price)}</span> دج</>}</span>
           </label>
         ))}
         {errors.packageId && (
@@ -508,6 +525,18 @@ export default function OrderForm({ packageId, onPackage }) {
         </label>
       </div>
 
+      {problem === "trial-used" && (
+        <p className="form__alert" role="alert">
+          الفيديو التجريبي مرة وحدة لكل رقم، وهذا الرقم جرّب من قبل. خيّر فيديو واحد ولا باقة.
+        </p>
+      )}
+
+      {problem === "trial-full" && (
+        <p className="form__alert" role="alert">
+          الفيديوهات التجريبية تاع هذا الأسبوع كملو. جرّب الأسبوع الجاي، ولا خيّر فيديو واحد.
+        </p>
+      )}
+
       {problem === "too-many" && (
         <p className="form__alert" role="alert">
           بعثت بزاف طلبيات بهذا الرقم. استنى شوية ولا راسلنا في واتساب.
@@ -529,10 +558,12 @@ export default function OrderForm({ packageId, onPackage }) {
         </div>
       ) : (
         <div className="form__group">
-          <button type="submit" className="btn btn--gold btn--block" disabled={status === "sending"}>
+          <button type="submit" className="btn btn--main btn--block" disabled={status === "sending"}>
             {status === "sending" ? "الطلب راهو يتبعث" : backendReady ? "ابعث الطلب" : "ابعث الطلب في واتساب"}
           </button>
-          <p className="form__after">ما تخلّص والو دروك. طرق الدفع تبانلك بعد ما تبعث الطلب.</p>
+          <p className="form__after">
+            {packageById(packageId)?.price === 0 ? "الفيديو التجريبي مجاني، ما كاين حتى دفع." : "ما تخلّص والو دروك. طرق الدفع تبانلك بعد ما تبعث الطلب."}
+          </p>
         </div>
       )}
     </form>
@@ -544,7 +575,7 @@ export function OrderSection({ packageId, onPackage }) {
     <section className="section order" id="order">
       <div className="wrap order__grid">
         <div className="order__intro" data-reveal="up">
-          <h2 className="section__title">اطلب باقتك</h2>
+          <h2 className="section__title">ابعث طلبك</h2>
           <p className="section__lead">عمّر الطلب وحنا نتكفلو بالباقي. كلش يتسجل عندنا منظم، وما يضيع حتى تفصيل.</p>
           <ul className="order__points">
             <li>

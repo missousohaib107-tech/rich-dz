@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { brand, customOffer, faqs, packages, tutorials, workCategories, works } from "../site.config.js";
-import { contentsLabel, formatDZD } from "../lib/orders.js";
+import { contentsLabel, formatDZD, perVideo } from "../lib/orders.js";
 import VideoTile from "./VideoTile.jsx";
 import { PlayIcon, WhatsAppIcon } from "./icons.jsx";
 import { CountUp } from "../lib/motion.jsx";
@@ -10,16 +10,16 @@ export function WeekSteps() {
     <section className="section" id="how">
       <div className="wrap">
         <div className="section__head" data-reveal="up">
-          <h2 className="section__title">كيفاش يمشي الأسبوع معانا</h2>
+          <h2 className="section__title">كيفاش نخدمو</h2>
         </div>
         <ol className="steps" data-reveal="each">
           <li className="steps__item" style={{ "--i": 0 }}>
-            <h3 className="steps__title">تخيّر باقة وتبعث الطلب</h3>
-            <p className="steps__text">تعمر معلوماتك وروابط صفحاتك هنا في الموقع. دقيقة وتكمل.</p>
+            <h3 className="steps__title">تخيّر عرض وتبعث الطلب</h3>
+            <p className="steps__text">تعمر معلوماتك وترفع صور المنتوج هنا في الموقع. دقيقة وتكمل.</p>
           </li>
           <li className="steps__item" style={{ "--i": 1 }}>
-            <h3 className="steps__title">تخلّص الأسبوع</h3>
-            <p className="steps__text">بـ BaridiMob ولا CCP. الأسبوع يبدا من نهار ما يتأكد الدفع.</p>
+            <h3 className="steps__title">تخلّص قبل ما نبداو</h3>
+            <p className="steps__text">بـ BaridiMob ولا CCP، وترفع الوصل في الموقع. الخدمة تبدا كي يتأكد الدفع.</p>
           </li>
           <li className="steps__item" style={{ "--i": 2 }}>
             <h3 className="steps__title">تشوف كل فيديو قبل</h3>
@@ -51,17 +51,58 @@ export function Week({ perDay, label }) {
 }
 
 export function Packages({ onChoose }) {
+  const trial = packages.find((p) => p.kind === "trial");
+  const single = packages.find((p) => p.kind === "single");
+  const weeks = packages.filter((p) => p.kind === "week");
+
   return (
     <section className="section" id="packages">
       <div className="wrap">
         <div className="section__head" data-reveal="up">
-          <h2 className="section__title">الباقات الأسبوعية</h2>
+          <h2 className="section__title">العروض والأسعار</h2>
           <p className="section__lead">
-            كل باقة هي أسبوع محتوى كامل، من أول نهار لسابع نهار. ومع كل باقة نوريوك كيفاش تنشر، خطوة بخطوة.
+            جرّب بفيديو مجاني، خذ فيديو واحد، ولا خيّر باقة أسبوع كامل. الدفع قبل ما نبداو الخدمة، ومع كل
+            طلب نوريوك كيفاش تنشر.
           </p>
         </div>
         <div className="rates">
-          {packages.map((p) => (
+          {trial && (
+            <article className="rate rate--solo rate--trial" data-reveal="up">
+              <div>
+                <h3 className="rate__name">{trial.name}</h3>
+                <p className="rate__line">{trial.line}</p>
+              </div>
+              <p className="rate__price">
+                <span className="rate__amount rate__free">مجاني</span>
+                <span className="rate__unit">مرة وحدة لكل زبون</span>
+              </p>
+              <div className="rate__action">
+                <a className="btn btn--main btn--block" href="#order" onClick={() => onChoose(trial.id)}>
+                  {trial.cta}
+                </a>
+              </div>
+            </article>
+          )}
+          {single && (
+            <article className="rate rate--solo" data-reveal="up">
+              <div>
+                <h3 className="rate__name">{single.name}</h3>
+                <p className="rate__line">{single.line}</p>
+              </div>
+              <p className="rate__price">
+                <span className="rate__amount">
+                  <CountUp value={single.price} format={formatDZD} /> دج
+                </span>
+                <span className="rate__unit">يعني {single.spoken}</span>
+              </p>
+              <div className="rate__action">
+                <a className="btn btn--line btn--block" href="#order" onClick={() => onChoose(single.id)}>
+                  {single.cta}
+                </a>
+              </div>
+            </article>
+          )}
+          {weeks.map((p) => (
             <article className="rate" key={p.id} data-reveal="week">
               <div>
                 <h3 className="rate__name">{p.name}</h3>
@@ -76,10 +117,18 @@ export function Packages({ onChoose }) {
               <div className="rate__week">
                 <Week perDay={p.perDay} label={`${p.perDay} فيديو في كل يوم من أيام الأسبوع السبعة`} />
               </div>
-              <p className="rate__counts">{contentsLabel(p)}</p>
+              <p className="rate__counts">
+                {contentsLabel(p)}
+                <span className="rate__per">
+                  الفيديو يخرجلك بحوالي{" "}
+                  <span className="rate__keep">
+                    <span className="latin">{formatDZD(perVideo(p))}</span> دج
+                  </span>
+                </span>
+              </p>
               <div className="rate__action">
-                <a className="btn btn--gold btn--block" href="#order" onClick={() => onChoose(p.id)}>
-                  اطلب باقة {p.name}
+                <a className="btn btn--main btn--block" href="#order" onClick={() => onChoose(p.id)}>
+                  {p.cta}
                 </a>
               </div>
             </article>
@@ -118,7 +167,7 @@ export function Works({ onPlay }) {
   });
 
   return (
-    <section className="section" id="works">
+    <section className="section dark" id="works">
       <div className="wrap">
         <div className="section__head" data-reveal="up">
           <h2 className="section__title">أعمالنا</h2>
@@ -258,7 +307,7 @@ export function Faq() {
 
 export function Footer() {
   return (
-    <footer className="foot">
+    <footer className="foot dark">
       <div className="wrap foot__row">
         <span className="wordmark">RICH DZ</span>
         <div className="foot__links">

@@ -1,15 +1,14 @@
 import { useState } from "react";
-import { packages } from "./site.config.js";
+import { defaultPackageId } from "./site.config.js";
 import { Header, Hero } from "./components/Hero.jsx";
 import { Faq, Footer, Guides, Packages, Sites, WeekSteps, Works } from "./components/Sections.jsx";
 import { OrderSection } from "./components/OrderForm.jsx";
 import VideoDialog from "./components/VideoDialog.jsx";
 import { useScrollMotion } from "./lib/motion.jsx";
 
-const defaultPackage = packages[0].id;
 
 export default function App() {
-  const [packageId, setPackageId] = useState(defaultPackage);
+  const [packageId, setPackageId] = useState(defaultPackageId);
   const [playing, setPlaying] = useState(null);
   useScrollMotion();
 
@@ -17,7 +16,7 @@ export default function App() {
     <>
       <Header />
       <main>
-        <Hero onPlay={setPlaying} />
+        <Hero onPlay={setPlaying} onChoose={setPackageId} />
         <WeekSteps />
         <Packages onChoose={setPackageId} />
         <Works onPlay={setPlaying} />

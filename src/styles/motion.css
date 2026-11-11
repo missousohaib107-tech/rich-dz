@@ -72,11 +72,11 @@
   transform: none;
 }
 
-/* الخطوات: الخط الذهبي يترسم، ومن بعد الرقم والكتابة */
+/* الخطوات: الخط الأزرق يترسم، ومن بعد الرقم والكتابة */
 @media (min-width: 900px) {
   .motion .steps[data-reveal="each"] > * {
     border-top-color: transparent;
-    background: linear-gradient(var(--gold), var(--gold)) right top / 0% 2px no-repeat;
+    background: linear-gradient(var(--accent), var(--accent)) right top / 0% 2px no-repeat;
     transition: opacity 0.8s var(--ease), transform 0.8s var(--ease), background-size 0.9s var(--ease);
     transition-delay: calc(var(--i, 0) * 160ms);
   }
@@ -95,7 +95,7 @@
 }
 
 .motion [data-reveal="week"].is-in .week__day--on {
-  background: var(--gold);
+  background: var(--accent);
   transform: none;
 }
 
@@ -117,8 +117,8 @@
 
 .tile:hover .tile__play {
   transform: scale(1.12);
-  background: var(--gold);
-  color: var(--gold-ink);
+  background: var(--accent);
+  color: var(--accent-ink);
 }
 
 /* مشغل الفيديو يتحل بنعومة */

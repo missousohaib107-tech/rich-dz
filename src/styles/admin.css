@@ -5,7 +5,7 @@
   font-weight: 600;
   font-size: 16px;
   letter-spacing: 0.28em;
-  color: var(--gold);
+  color: var(--accent-text);
   direction: ltr;
 }
 
@@ -44,7 +44,7 @@
   position: sticky;
   top: 0;
   z-index: 10;
-  background: rgba(18, 19, 23, 0.94);
+  background: var(--glass);
   -webkit-backdrop-filter: blur(12px);
   backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--line);
@@ -77,7 +77,7 @@
 
 .board__demo {
   padding: 12px 16px;
-  border-inline-start: 3px solid var(--gold);
+  border-inline-start: 3px solid var(--accent);
   background: var(--surface);
   font-size: 14px;
 }
@@ -202,7 +202,7 @@
 }
 
 .card--queue {
-  border-color: var(--gold);
+  border-color: var(--accent);
 }
 
 .card--cancelled {
@@ -221,15 +221,15 @@
   width: 30px;
   height: 30px;
   border-radius: 50%;
-  background: var(--gold);
-  color: var(--gold-ink);
+  background: var(--accent);
+  color: var(--accent-ink);
   font-size: 15px;
   font-weight: 800;
 }
 
 .card__code {
   font-size: 15px;
-  color: var(--gold);
+  color: var(--accent-text);
 }
 
 .card__when {
@@ -305,7 +305,7 @@
 }
 
 .count__cell--on {
-  background: var(--gold);
+  background: var(--accent);
 }
 
 .count__ctl {
@@ -358,7 +358,7 @@
 }
 
 .card__facts a {
-  color: var(--gold);
+  color: var(--accent-text);
   font-weight: 700;
 }
 
@@ -374,7 +374,7 @@
   gap: 10px;
 }
 
-.card__actions .btn--gold {
+.card__actions .btn--main {
   flex: 1 1 160px;
 }
 
@@ -451,7 +451,7 @@
 }
 
 .receipt__warn {
-  color: var(--gold);
+  color: var(--accent-text);
   font-size: 13px;
   font-weight: 700;
 }
@@ -501,9 +501,9 @@
   place-items: center;
   width: 26px;
   height: 26px;
-  border: 1px solid var(--gold);
+  border: 1px solid var(--accent);
   border-radius: 50%;
-  color: var(--gold);
+  color: var(--accent-text);
   font-size: 13px;
   font-weight: 800;
 }
@@ -522,7 +522,7 @@
 }
 
 .plan__label {
-  color: var(--gold);
+  color: var(--accent-text);
   font-size: 13px;
   font-weight: 800;
 }

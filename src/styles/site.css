@@ -36,7 +36,7 @@
   position: sticky;
   top: 0;
   z-index: 20;
-  background: rgba(18, 19, 23, 0.9);
+  background: var(--glass);
   -webkit-backdrop-filter: blur(12px);
   backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--line);
@@ -55,7 +55,7 @@
   font-weight: 600;
   font-size: 16px;
   letter-spacing: 0.28em;
-  color: var(--gold);
+  color: var(--accent-text);
   text-decoration: none;
   direction: ltr;
 }
@@ -134,7 +134,7 @@
 .hero__facts svg {
   width: 16px;
   height: 16px;
-  color: var(--gold);
+  color: var(--accent-text);
   flex: none;
 }
 
@@ -236,8 +236,8 @@
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background: rgba(18, 19, 23, 0.72);
-  color: var(--ink);
+  background: rgba(7, 9, 14, 0.72);
+  color: #fff;
 }
 
 .tile__play svg {
@@ -251,10 +251,11 @@
   left: 10px;
   padding: 2px 8px;
   border-radius: 6px;
-  background: rgba(18, 19, 23, 0.72);
+  background: rgba(7, 9, 14, 0.72);
   font-size: 12px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
+  color: #fff;
 }
 
 .tile__flag {
@@ -262,15 +263,15 @@
   inset-block-start: 0;
   inset-inline: 0;
   padding: 5px 10px;
-  background: var(--gold);
-  color: var(--gold-ink);
+  background: var(--accent);
+  color: var(--accent-ink);
   font-size: 12px;
   font-weight: 800;
   text-align: center;
 }
 
 .tile--face {
-  border-color: var(--gold);
+  border-color: var(--accent);
 }
 
 /* ── خطوات الأسبوع ── */
@@ -301,7 +302,7 @@
   font-weight: 700;
   font-size: 44px;
   line-height: 1.1;
-  color: var(--gold);
+  color: var(--accent-text);
 }
 
 .steps__title {
@@ -324,11 +325,11 @@
   .steps__item {
     grid-template-columns: minmax(0, 1fr);
     padding-block: 20px 0;
-    border-top: 2px solid var(--gold);
+    border-top: 2px solid var(--accent);
   }
 
   .steps__item:first-child {
-    border-top: 2px solid var(--gold);
+    border-top: 2px solid var(--accent);
     padding-top: 20px;
   }
 
@@ -419,7 +420,7 @@
 }
 
 .week__day--on {
-  background: var(--gold);
+  background: var(--accent);
 }
 
 @media (min-width: 900px) {
@@ -537,7 +538,7 @@
 
 .guide__name {
   display: block;
-  color: var(--gold);
+  color: var(--accent-text);
   font-size: 13px;
   font-weight: 800;
 }
@@ -563,8 +564,8 @@
   width: 44px;
   height: 44px;
   border-radius: 50%;
-  background: var(--gold);
-  color: var(--gold-ink);
+  background: var(--accent);
+  color: var(--accent-ink);
 }
 
 .guide__go svg {
@@ -658,13 +659,13 @@
 }
 
 .pick:has(input:checked) {
-  border-color: var(--gold);
-  background: var(--gold-soft);
+  border-color: var(--accent);
+  background: var(--accent-soft);
 }
 
 .pick:has(input:checked) .pick__dot {
-  border-color: var(--gold);
-  background: radial-gradient(circle, var(--gold) 0 5px, transparent 6px);
+  border-color: var(--accent);
+  background: radial-gradient(circle, var(--accent) 0 5px, transparent 6px);
 }
 
 .pick:has(input:focus-visible) {
@@ -698,7 +699,7 @@
 
 .form__note {
   padding: 14px 16px;
-  border-inline-start: 3px solid var(--gold);
+  border-inline-start: 3px solid var(--accent);
   background: var(--ground);
   font-size: 15px;
 }
@@ -805,9 +806,9 @@
   width: 26px;
   height: 26px;
   margin-top: 1px;
-  border: 1px solid var(--gold);
+  border: 1px solid var(--accent);
   border-radius: 50%;
-  color: var(--gold);
+  color: var(--accent-text);
   font-size: 13px;
   font-weight: 800;
 }
@@ -853,7 +854,7 @@
 .order__points svg {
   width: 16px;
   height: 16px;
-  color: var(--gold);
+  color: var(--accent-text);
   flex: none;
   transform: translateY(2px);
 }
@@ -929,7 +930,7 @@
 .faq__q::after {
   content: "+";
   flex: none;
-  color: var(--gold);
+  color: var(--accent-text);
   font-size: 24px;
   font-weight: 500;
   line-height: 1;
@@ -1043,7 +1044,7 @@
 
 .player__note {
   margin-top: 8px;
-  color: var(--gold);
+  color: var(--accent-text);
   font-size: 13px;
   font-weight: 700;
 }
@@ -1117,4 +1118,47 @@
 .slip__text {
   font-size: 15px;
   margin-bottom: 6px;
+}
+
+/* ── عروض بلا أسبوع: التجريبي والفيديو الواحد ── */
+.rate--trial {
+  margin-inline: -14px;
+  padding-inline: 14px;
+  border-top: 0;
+  border-radius: 12px;
+  background: var(--accent-soft);
+}
+
+.rate--trial + .rate {
+  border-top: 0;
+}
+
+.rate__free {
+  color: var(--accent-text);
+}
+
+.rate__per {
+  display: block;
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.rate__keep {
+  white-space: nowrap;
+}
+
+@media (min-width: 900px) {
+  .rate--solo {
+    grid-template-columns: minmax(0, 1fr) auto auto;
+  }
+
+  .rate__action {
+    min-width: 200px;
+  }
+
+  .rate--trial {
+    margin-inline: -20px;
+    padding-inline: 20px;
+  }
 }

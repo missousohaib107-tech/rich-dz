@@ -1,20 +1,24 @@
-/* RICH DZ — نفس هوية صفحات المعاينة: فحمي دافي وذهبي. */
+/* RICH DZ — أبيض، أزرق وأسود. الأقسام الكحلة (.dark) تقلب نفس الرموز،
+   يعني كل عنصر يخدم في الزوج بلا ما نعاودو نكتبوه. */
 :root {
-  --ground: #121317;
-  --surface: #1b1d22;
-  --raised: #24272e;
-  --line: #2c2f36;
-  --line-strong: #454953;
-  --ink: #f3f1ec;
-  --muted: #a7aab2;
-  --gold: #e3b04b;
-  --gold-soft: rgba(227, 176, 75, 0.14);
-  --gold-ink: #1a1408;
-  --ok: #6cc497;
-  --ok-soft: rgba(108, 196, 151, 0.14);
-  --bad: #ef8a73;
+  --ground: #ffffff;
+  --surface: #f2f5fb;
+  --raised: #e2e8f3;
+  --line: #dde3ee;
+  --line-strong: #aab4c8;
+  --ink: #0a0c11;
+  --muted: #566074;
+  --accent: #1150e6;        /* تعمير: أزرار، خانات، شارات */
+  --accent-hover: #0d43c4;
+  --accent-text: #0f47cf;   /* الأزرق كي يكون كتابة فوق الخلفية */
+  --accent-soft: rgba(17, 80, 230, 0.09);
+  --accent-ink: #ffffff;    /* الكتابة فوق الأزرق */
+  --ok: #107a4b;
+  --ok-soft: rgba(16, 122, 75, 0.1);
+  --bad: #c6341c;
   --wa: #25d366;
   --wa-ink: #062b16;
+  --glass: rgba(255, 255, 255, 0.92);
 
   --font-display: "Reem Kufi Variable", "Cairo Variable", "Segoe UI", Tahoma, sans-serif;
   --font-body: "Cairo Variable", "Segoe UI", Tahoma, sans-serif;
@@ -25,6 +29,25 @@
   --r-control: 10px;
   --r-tile: 14px;
 
+  color-scheme: light;
+}
+
+.dark {
+  --ground: #07090e;
+  --surface: #10141d;
+  --raised: #1d2433;
+  --line: #232b3b;
+  --line-strong: #3b465c;
+  --ink: #ffffff;
+  --muted: #a9b3c7;
+  --accent-text: #6ea2ff;
+  --accent-soft: rgba(61, 130, 255, 0.16);
+  --ok: #6cc497;
+  --ok-soft: rgba(108, 196, 151, 0.14);
+  --bad: #ff9a85;
+  --glass: rgba(7, 9, 14, 0.9);
+  background: var(--ground);
+  color: var(--ink);
   color-scheme: dark;
 }
 
@@ -96,8 +119,8 @@ a {
 }
 
 ::selection {
-  background: var(--gold);
-  color: var(--gold-ink);
+  background: var(--accent);
+  color: var(--accent-ink);
 }
 
 .latin {
@@ -138,13 +161,13 @@ a {
   flex: none;
 }
 
-.btn--gold {
-  background: var(--gold);
-  color: var(--gold-ink);
+.btn--main {
+  background: var(--accent);
+  color: var(--accent-ink);
 }
 
-.btn--gold:hover {
-  background: #edc068;
+.btn--main:hover {
+  background: var(--accent-hover);
 }
 
 .btn--line {
@@ -211,13 +234,13 @@ a {
 }
 
 .input::placeholder {
-  color: #7d818b;
+  color: #7b8496;
 }
 
 .input:focus {
   outline: none;
-  border-color: var(--gold);
-  box-shadow: 0 0 0 3px var(--gold-soft);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
 }
 
 .input[aria-invalid="true"] {

@@ -35,34 +35,53 @@ const intro = {
         <h1 class="display big">${W("محتوى محلك، جاهز كل أسبوع", 0.2, 0.12)}</h1>
         <div class="shots">${POSTERS.map((p, i) =>
           `<div class="shot pop" style="--d:${(1 + i * 0.25).toFixed(2)}s"><img src="../public/${p}/poster.jpg" alt=""><b>${i + 1}</b></div>`).join("")}</div>
-        <p class="body gold">${W("فيديو وصورة إعلانية كل يوم", 3.1, 0.08)}</p>
+        <p class="body accent">${W("فيديو وصورة إعلانية كل يوم", 3.1, 0.08)}</p>
       </div>`,
     },
     {
-      dur: 5.6, cues: [0.1, 0.9, 2.1],
+      dur: 4.8, cues: [0.1, 0.9, 1.9],
+      html: `<div class="inner">
+        <h1 class="display big">${W("جرّب قبل ما تخلّص", 0.1, 0.13)}</h1>
+        <p class="head">${W("فيديو تجريبي لمنتوجك، 20 ثانية", 0.9, 0.09)}</p>
+        <div class="price pop" style="--d:1.9s"><span class="num accent">مجاني</span></div>
+        <p class="hint">${W("تشوف الخدمة بعينك، ومن بعد تخيّر", 2.6, 0.08)}</p>
+      </div>`,
+    },
+    {
+      dur: 4.6, cues: [0.1, 1.1],
+      html: `<div class="inner">
+        <h1 class="display huge">${W("فيديو واحد", 0.1, 0.16)}</h1>
+        <div class="price up" style="--d:1s"><span class="num accent ltr" data-from="0" data-to="3500" data-at="1.1" data-len="1">0</span><span class="unit">دج</span></div>
+        <p class="hint">${W("يعني 35 ألف", 2.2, 0.1)}</p>
+      </div>`,
+    },
+    {
+      dur: 6.2, cues: [0.1, 0.9, 2.1],
       html: `<div class="inner">
         <h1 class="display huge up" style="--d:.1s">اليومي</h1>
         <p class="head">${W("7 فيديو و7 صور في الأسبوع", 0.5, 0.09)}</p>
         ${week(0.9)}${days(1.0)}
-        <div class="price up" style="--d:2s"><span class="num gold ltr" data-from="0" data-to="10000" data-at="2.1" data-len="1.1">0</span><span class="unit">دج</span></div>
+        <div class="price up" style="--d:2s"><span class="num accent ltr" data-from="0" data-to="10000" data-at="2.1" data-len="1.1">0</span><span class="unit">دج</span></div>
         <p class="hint">${W("في الأسبوع، يعني مليون", 3.1, 0.08)}</p>
+        <p class="body">${W("الفيديو يخرجلك بحوالي 1,430 دج", 3.7, 0.08)}</p>
       </div>`,
     },
     {
-      dur: 5.8, cues: [0.1, 0.9, 1.5, 2.4],
+      dur: 6.4, cues: [0.1, 0.9, 1.5, 2.4],
       html: `<div class="inner">
         <h1 class="display huge up" style="--d:.1s">المضاعف</h1>
         <p class="head">${W("14 فيديو و14 صورة في الأسبوع", 0.5, 0.09)}</p>
         ${week(0.9, 0.08)}${week(1.5, 0.08)}${days(1.1)}
-        <div class="price up" style="--d:2.3s"><span class="num gold ltr" data-from="10000" data-to="18000" data-at="2.4" data-len="1.1">10,000</span><span class="unit">دج</span></div>
+        <div class="price up" style="--d:2.3s"><span class="num accent ltr" data-from="10000" data-to="18000" data-at="2.4" data-len="1.1">10,000</span><span class="unit">دج</span></div>
         <p class="hint">${W("في الأسبوع، يعني مليون و800", 3.4, 0.08)}</p>
+        <p class="body">${W("الفيديو يخرجلك بحوالي 1,290 دج", 4.0, 0.08)}</p>
       </div>`,
     },
     {
       dur: 3.4, cues: [0.1],
       html: `<div class="inner">
         <h1 class="display big">${W("تحب أكثر؟", 0.1, 0.14)}</h1>
-        <p class="head gold">${W("نديرولك عرض خاص يليق بيك", 0.7, 0.1)}</p>
+        <p class="head accent">${W("نديرولك عرض خاص يليق بيك", 0.7, 0.1)}</p>
       </div>`,
     },
     {
@@ -71,7 +90,7 @@ const intro = {
         <h1 class="display big up" style="--d:.1s">كيفاش تمشي</h1>
         <div class="steps">
           <div class="step up" style="--d:.8s"><i>1</i><span>تطلب باقتك من الموقع</span></div>
-          <div class="step up" style="--d:1.6s"><i>2</i><span>تخلّص الأسبوع بـ BaridiMob ولا CCP</span></div>
+          <div class="step up" style="--d:1.6s"><i>2</i><span>تخلّص قبل ما نبداو، بـ BaridiMob ولا CCP</span></div>
           <div class="step up" style="--d:2.4s"><i>3</i><span>تشوف كل فيديو قبل ما تستلمو</span></div>
           <div class="step up" style="--d:3.2s"><i>4</i><span>تستلم، ونوريوك كيفاش تنشر</span></div>
         </div>
@@ -108,7 +127,7 @@ const tutoTitle = (platform, title, count) => ({
   dur: 4, cues: [0.1, 1.0],
   html: `<div class="inner">
     <p class="wordmark fade" style="--d:.1s">RICH DZ</p>
-    <p class="head gold up" style="--d:.2s">${platform}</p>
+    <p class="head accent up" style="--d:.2s">${platform}</p>
     <h1 class="tut" style="font-size:128px">${W(title, 0.4, 0.11)}</h1>
     <div class="rule" style="--d:1.3s"></div>
     <p class="body up" style="--d:1.5s">في ${count} خطوات</p>
@@ -123,7 +142,7 @@ const tutoDone = (title, line) => ({
     <h1 class="tut" style="font-size:128px">${W(title, 0.9, 0.12)}</h1>
     <p class="body">${W(line, 1.7, 0.08)}</p>
     <div class="rule" style="--d:2.5s; transform-origin:center"></div>
-    <p class="head gold up" style="--d:2.7s">اطلب باقتك من</p>
+    <p class="head accent up" style="--d:2.7s">اطلب باقتك من</p>
     <p class="wordmark up" style="--d:3s; font-size:76px">RICH DZ</p>
   </div>`,
 });

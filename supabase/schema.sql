@@ -14,13 +14,17 @@ create table if not exists public.packages (
   name       text not null,
   videos     int  not null check (videos > 0),
   images     int  not null check (images >= 0),
-  price_dzd  int  not null check (price_dzd > 0),
-  active     boolean not null default true
+  price_dzd  int  not null check (price_dzd >= 0),   -- 0 = عرض مجاني
+  active     boolean not null default true,
+  weekly_cap int  check (weekly_cap is null or weekly_cap > 0)   -- أقصى عدد طلبيات في 7 أيام
 );
 
-insert into public.packages (id, name, videos, images, price_dzd) values
-  ('daily',  'اليومي',    7,  7, 10000),
-  ('double', 'المضاعف',  14, 14, 18000)
+-- العرض المجاني: مرة لكل رقم هاتف، وما يتعداش weekly_cap في الأسبوع.
+insert into public.packages (id, name, videos, images, price_dzd, weekly_cap) values
+  ('trial',  'فيديو تجريبي', 1,  0,     0, 10),
+  ('single', 'فيديو واحد',   1,  0,  3500, null),
+  ('daily',  'اليومي',       7,  7, 10000, null),
+  ('double', 'المضاعف',     14, 14, 18000, null)
 on conflict (id) do nothing;
 
 create table if not exists public.orders (
@@ -147,6 +151,7 @@ declare
   v_phone  text := regexp_replace(coalesce(p_phone, ''), '[^0-9]', '', 'g');
   v_pkg    public.packages%rowtype;
   v_code   text;
+  v_free   boolean;
   v_chars  constant text := 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
 begin
   if v_phone like '00213%' then v_phone := '0' || substr(v_phone, 6);
@@ -165,11 +170,25 @@ begin
 
   select * into v_pkg from public.packages where id = p_package and active;
   if not found then raise exception 'invalid_package'; end if;
+  v_free := v_pkg.price_dzd = 0;
 
   -- نفس الرقم ما يبعثش أكثر من 3 طلبيات في ساعة
   if (select count(*) from public.orders
       where phone = v_phone and created_at > now() - interval '1 hour') >= 3 then
     raise exception 'too_many_orders';
+  end if;
+
+  -- العرض المجاني: مرة وحدة لكل رقم
+  if v_free and exists (select 1 from public.orders
+      where phone = v_phone and package_id = v_pkg.id and work_status <> 'cancelled') then
+    raise exception 'trial_used';
+  end if;
+
+  -- وعدد محدود في الأسبوع، باش الخدمة المجانية تبقى محسوبة
+  if v_pkg.weekly_cap is not null and (select count(*) from public.orders
+      where package_id = v_pkg.id and work_status <> 'cancelled'
+        and created_at > now() - interval '7 days') >= v_pkg.weekly_cap then
+    raise exception 'trial_full';
   end if;
 
   loop
@@ -179,13 +198,17 @@ begin
       insert into public.orders (
         code, first_name, last_name, phone, activity, offer,
         package_id, package_name, videos_total, images_total, price_dzd,
-        has_pages, facebook_url, instagram_url, tiktok_url, notes
+        has_pages, facebook_url, instagram_url, tiktok_url, notes,
+        payment_status, paid_at
       ) values (
         v_code, v_first, v_last, v_phone, v_act, btrim(coalesce(p_offer, '')),
         v_pkg.id, v_pkg.name, v_pkg.videos, v_pkg.images, v_pkg.price_dzd,
         coalesce(p_has_pages, true),
         btrim(coalesce(p_facebook, '')), btrim(coalesce(p_instagram, '')),
-        btrim(coalesce(p_tiktok, '')), btrim(coalesce(p_notes, ''))
+        btrim(coalesce(p_tiktok, '')), btrim(coalesce(p_notes, '')),
+        -- العرض المجاني ما فيه حتى دفع: يروح مباشرة لطابور الخدمة
+        case when v_free then 'paid' else 'unpaid' end,
+        case when v_free then now() end
       );
       exit;
     exception when unique_violation then
