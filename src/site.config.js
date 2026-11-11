@@ -47,7 +47,7 @@ export const packages = [
     videos: 1,
     images: 0,
     price: 3500,
-    spoken: "35 ألف",
+    spoken: "350 ألف",
     line: "فيديو إعلاني واحد لمنتوجك.",
     cta: "اطلب فيديو واحد",
   },

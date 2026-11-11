@@ -52,7 +52,7 @@ const intro = {
       html: `<div class="inner">
         <h1 class="display huge">${W("فيديو واحد", 0.1, 0.16)}</h1>
         <div class="price up" style="--d:1s"><span class="num accent ltr" data-from="0" data-to="3500" data-at="1.1" data-len="1">0</span><span class="unit">دج</span></div>
-        <p class="hint">${W("يعني 35 ألف", 2.2, 0.1)}</p>
+        <p class="hint">${W("يعني 350 ألف", 2.2, 0.1)}</p>
       </div>`,
     },
     {
